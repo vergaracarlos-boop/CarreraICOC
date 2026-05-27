@@ -1,1281 +1,1237 @@
-import React, { useState, useMemo } from 'react';
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAPE - Módulo Permanencia</title>
+    
+    <!-- 1. Cargar Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- CSS extra para ocultar scrollbars (ya que usaste scrollbar-none en tu código) -->
+    <style>
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 
-// SET DE DATOS DE EJEMPLO REALISTA (Basado en la estructura de los reportes de Ingeniería Civil e Informática)
-const DATOS_EJEMPLO = [
-  // Casos críticos: 3 o más reprobaciones en Álgebra
-  { Sede: "02028", Año: "2022", Período: "1SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "INGE06", NombreAsignatura: "ALGEBRA", EstadoAsignatura: "CERRADO", Rut: "20683691", Dv: "1", Nombres: "David Nicolas", ApPaterno: "Inostroza", ApMaterno: "Valdivia", NotaFinal: 2.2, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "2" },
-  { Sede: "02028", Año: "2022", Período: "2SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "INGE06", NombreAsignatura: "ALGEBRA", EstadoAsignatura: "CERRADO", Rut: "20683691", Dv: "1", Nombres: "David Nicolas", ApPaterno: "Inostroza", ApMaterno: "Valdivia", NotaFinal: 1.0, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "2" },
-  { Sede: "02028", Año: "2023", Período: "1SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "INGE06", NombreAsignatura: "ALGEBRA", EstadoAsignatura: "CERRADO", Rut: "20683691", Dv: "1", Nombres: "David Nicolas", ApPaterno: "Inostroza", ApMaterno: "Valdivia", NotaFinal: 3.1, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "2" },
-  { Sede: "02028", Año: "2023", Período: "2SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "INGE06", NombreAsignatura: "ALGEBRA", EstadoAsignatura: "CERRADO", Rut: "20683691", Dv: "1", Nombres: "David Nicolas", ApPaterno: "Inostroza", ApMaterno: "Valdivia", NotaFinal: 4.2, Condicion: "APROBADO", Creditos: "6", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "2" },
+    <!-- 2. Cargar React, ReactDOM y Babel -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <!-- Aquí es donde React inyectará la aplicación -->
+    <div id="root"></div>
 
-  // Alumno con 4 reprobaciones sin aprobar aún (Termodinámica)
-  { Sede: "02028", Año: "2022", Período: "2SEM", CodigoCarrera: "32007", NombreCarrera: "INGENIERIA CIVIL ELECTRICA-PUERTO MONTT", CodigoAsignatura: "FDCI03", NombreAsignatura: "Termodinámica", EstadoAsignatura: "CERRADO", Rut: "21515926", Dv: "4", Nombres: "Tomás Benjamín", ApPaterno: "Andrade", ApMaterno: "García", NotaFinal: 1.9, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2022", PlanEstudios: "32007DU496", Nivel: "3" },
-  { Sede: "02028", Año: "2023", Período: "2SEM", CodigoCarrera: "32007", NombreCarrera: "INGENIERIA CIVIL ELECTRICA-PUERTO MONTT", CodigoAsignatura: "FDCI03", NombreAsignatura: "Termodinámica", EstadoAsignatura: "CERRADO", Rut: "21515926", Dv: "4", Nombres: "Tomás Benjamín", ApPaterno: "Andrade", ApMaterno: "García", NotaFinal: 2.0, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2022", PlanEstudios: "32007DU496", Nivel: "3" },
-  { Sede: "02028", Año: "2024", Período: "2SEM", CodigoCarrera: "32007", NombreCarrera: "INGENIERIA CIVIL ELECTRICA-PUERTO MONTT", CodigoAsignatura: "FDCI03", NombreAsignatura: "Termodinámica", EstadoAsignatura: "CERRADO", Rut: "21515926", Dv: "4", Nombres: "Tomás Benjamín", ApPaterno: "Andrade", ApMaterno: "García", NotaFinal: 3.2, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2022", PlanEstudios: "32007DU496", Nivel: "3" },
-  { Sede: "02028", Año: "2025", Período: "2SEM", CodigoCarrera: "32007", NombreCarrera: "INGENIERIA CIVIL ELECTRICA-PUERTO MONTT", CodigoAsignatura: "FDCI03", NombreAsignatura: "Termodinámica", EstadoAsignatura: "CERRADO", Rut: "21515926", Dv: "4", Nombres: "Tomás Benjamín", ApPaterno: "Andrade", ApMaterno: "García", NotaFinal: 3.5, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2022", PlanEstudios: "32007DU496", Nivel: "3" },
+    <!-- 3. Tu código React dentro de una etiqueta script de tipo "text/babel" -->
+    <script type="text/babel">
+        // 4. En lugar de importar, extraemos los hooks del objeto global React
+        const { useState, useMemo } = React;
 
-  // Alumno con 3 reprobaciones en Álgebra Obras Civiles (Sin aprobar)
-  { Sede: "02028", Año: "2024", Período: "1SEM", CodigoCarrera: "3206", NombreCarrera: "INGENIERÍA CIVIL EN OBRAS CIVILES- PUERTO MONTT", CodigoAsignatura: "CBI04", NombreAsignatura: "Álgebra", EstadoAsignatura: "CERRADO", Rut: "22245214", Dv: "7", Nombres: "Cristian Gabriel", ApPaterno: "Garrido", ApMaterno: "Mansilla", NotaFinal: 2.8, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2024", PlanEstudios: "320601", Nivel: "2" },
-  { Sede: "02028", Año: "2024", Período: "2SEM", CodigoCarrera: "3206", NombreCarrera: "INGENIERÍA CIVIL EN OBRAS CIVILES- PUERTO MONTT", CodigoAsignatura: "CBI04", NombreAsignatura: "Álgebra", EstadoAsignatura: "CERRADO", Rut: "22245214", Dv: "7", Nombres: "Cristian Gabriel", ApPaterno: "Garrido", ApMaterno: "Mansilla", NotaFinal: 3.1, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2024", PlanEstudios: "320601", Nivel: "2" },
-  { Sede: "02028", Año: "2025", Período: "1SEM", CodigoCarrera: "3206", NombreCarrera: "INGENIERÍA CIVIL EN OBRAS CIVILES- PUERTO MONTT", CodigoAsignatura: "CBI04", NombreAsignatura: "Álgebra", EstadoAsignatura: "CERRADO", Rut: "22245214", Dv: "7", Nombres: "Cristian Gabriel", ApPaterno: "Garrido", ApMaterno: "Mansilla", NotaFinal: 3.9, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2024", PlanEstudios: "320601", Nivel: "2" },
+        // SET DE DATOS DE EJEMPLO
+        const DATOS_EJEMPLO = [
+          { Sede: "02028", Año: "2022", Período: "1SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "INGE06", NombreAsignatura: "ALGEBRA", EstadoAsignatura: "CERRADO", Rut: "20683691", Dv: "1", Nombres: "David Nicolas", ApPaterno: "Inostroza", ApMaterno: "Valdivia", NotaFinal: 2.2, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "2" },
+          { Sede: "02028", Año: "2022", Período: "2SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "INGE06", NombreAsignatura: "ALGEBRA", EstadoAsignatura: "CERRADO", Rut: "20683691", Dv: "1", Nombres: "David Nicolas", ApPaterno: "Inostroza", ApMaterno: "Valdivia", NotaFinal: 1.0, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "2" },
+          { Sede: "02028", Año: "2023", Período: "1SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "INGE06", NombreAsignatura: "ALGEBRA", EstadoAsignatura: "CERRADO", Rut: "20683691", Dv: "1", Nombres: "David Nicolas", ApPaterno: "Inostroza", ApMaterno: "Valdivia", NotaFinal: 3.1, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "2" },
+          { Sede: "02028", Año: "2023", Período: "2SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "INGE06", NombreAsignatura: "ALGEBRA", EstadoAsignatura: "CERRADO", Rut: "20683691", Dv: "1", Nombres: "David Nicolas", ApPaterno: "Inostroza", ApMaterno: "Valdivia", NotaFinal: 4.2, Condicion: "APROBADO", Creditos: "6", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "2" },
+          { Sede: "02028", Año: "2022", Período: "2SEM", CodigoCarrera: "32007", NombreCarrera: "INGENIERIA CIVIL ELECTRICA-PUERTO MONTT", CodigoAsignatura: "FDCI03", NombreAsignatura: "Termodinámica", EstadoAsignatura: "CERRADO", Rut: "21515926", Dv: "4", Nombres: "Tomás Benjamín", ApPaterno: "Andrade", ApMaterno: "García", NotaFinal: 1.9, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2022", PlanEstudios: "32007DU496", Nivel: "3" },
+          { Sede: "02028", Año: "2023", Período: "2SEM", CodigoCarrera: "32007", NombreCarrera: "INGENIERIA CIVIL ELECTRICA-PUERTO MONTT", CodigoAsignatura: "FDCI03", NombreAsignatura: "Termodinámica", EstadoAsignatura: "CERRADO", Rut: "21515926", Dv: "4", Nombres: "Tomás Benjamín", ApPaterno: "Andrade", ApMaterno: "García", NotaFinal: 2.0, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2022", PlanEstudios: "32007DU496", Nivel: "3" },
+          { Sede: "02028", Año: "2024", Período: "2SEM", CodigoCarrera: "32007", NombreCarrera: "INGENIERIA CIVIL ELECTRICA-PUERTO MONTT", CodigoAsignatura: "FDCI03", NombreAsignatura: "Termodinámica", EstadoAsignatura: "CERRADO", Rut: "21515926", Dv: "4", Nombres: "Tomás Benjamín", ApPaterno: "Andrade", ApMaterno: "García", NotaFinal: 3.2, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2022", PlanEstudios: "32007DU496", Nivel: "3" },
+          { Sede: "02028", Año: "2025", Período: "2SEM", CodigoCarrera: "32007", NombreCarrera: "INGENIERIA CIVIL ELECTRICA-PUERTO MONTT", CodigoAsignatura: "FDCI03", NombreAsignatura: "Termodinámica", EstadoAsignatura: "CERRADO", Rut: "21515926", Dv: "4", Nombres: "Tomás Benjamín", ApPaterno: "Andrade", ApMaterno: "García", NotaFinal: 3.5, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2022", PlanEstudios: "32007DU496", Nivel: "3" },
+          { Sede: "02028", Año: "2024", Período: "1SEM", CodigoCarrera: "3206", NombreCarrera: "INGENIERÍA CIVIL EN OBRAS CIVILES- PUERTO MONTT", CodigoAsignatura: "CBI04", NombreAsignatura: "Álgebra", EstadoAsignatura: "CERRADO", Rut: "22245214", Dv: "7", Nombres: "Cristian Gabriel", ApPaterno: "Garrido", ApMaterno: "Mansilla", NotaFinal: 2.8, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2024", PlanEstudios: "320601", Nivel: "2" },
+          { Sede: "02028", Año: "2024", Período: "2SEM", CodigoCarrera: "3206", NombreCarrera: "INGENIERÍA CIVIL EN OBRAS CIVILES- PUERTO MONTT", CodigoAsignatura: "CBI04", NombreAsignatura: "Álgebra", EstadoAsignatura: "CERRADO", Rut: "22245214", Dv: "7", Nombres: "Cristian Gabriel", ApPaterno: "Garrido", ApMaterno: "Mansilla", NotaFinal: 3.1, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2024", PlanEstudios: "320601", Nivel: "2" },
+          { Sede: "02028", Año: "2025", Período: "1SEM", CodigoCarrera: "3206", NombreCarrera: "INGENIERÍA CIVIL EN OBRAS CIVILES- PUERTO MONTT", CodigoAsignatura: "CBI04", NombreAsignatura: "Álgebra", EstadoAsignatura: "CERRADO", Rut: "22245214", Dv: "7", Nombres: "Cristian Gabriel", ApPaterno: "Garrido", ApMaterno: "Mansilla", NotaFinal: 3.9, Condicion: "REPROBADO", Creditos: "6", AnioIngreso: "2024", PlanEstudios: "320601", Nivel: "2" },
+          { Sede: "02028", Año: "2023", Período: "1SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "FDCI02", NombreAsignatura: "Programación", EstadoAsignatura: "CERRADO", Rut: "19837482", Dv: "K", Nombres: "Mariela Paz", ApPaterno: "Henriquez", ApMaterno: "Paredes", NotaFinal: 3.0, Condicion: "REPROBADO", Creditos: "7", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "2" },
+          { Sede: "02028", Año: "2023", Período: "2SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "FDCI02", NombreAsignatura: "Programación", EstadoAsignatura: "CERRADO", Rut: "19837482", Dv: "K", Nombres: "Mariela Paz", ApPaterno: "Henriquez", ApMaterno: "Paredes", NotaFinal: 2.5, Condicion: "REPROBADO", Creditos: "7", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "2" },
+          { Sede: "02028", Año: "2024", Período: "1SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "FDCI02", NombreAsignatura: "Programación", EstadoAsignatura: "CERRADO", Rut: "19837482", Dv: "K", Nombres: "Mariela Paz", ApPaterno: "Henriquez", ApMaterno: "Paredes", NotaFinal: 3.6, Condicion: "REPROBADO", Creditos: "7", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "2" },
+          { Sede: "02028", Año: "2024", Período: "2SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "FDCI02", NombreAsignatura: "Programación", EstadoAsignatura: "CERRADO", Rut: "19837482", Dv: "K", Nombres: "Mariela Paz", ApPaterno: "Henriquez", ApMaterno: "Paredes", NotaFinal: 4.8, Condicion: "APROBADO", Creditos: "7", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "2" },
+          { Sede: "02028", Año: "2025", Período: "2SEM", CodigoCarrera: "3218", NombreCarrera: "INGENIERIA CIVIL INDUSTRIAL-PUERTO MONTT", CodigoAsignatura: "ELEC331", NombreAsignatura: "Transformación Empresarial", EstadoAsignatura: "CERRADO", Rut: "20291774", Dv: "7", Nombres: "Jorge Ignacio", ApPaterno: "Nahuelhueique", ApMaterno: "Navarro", NotaFinal: 6.5, Condicion: "APROBADO", Creditos: "7", AnioIngreso: "2019", PlanEstudios: "3218IC2013", Nivel: "7" },
+          { Sede: "02028", Año: "2025", Período: "2SEM", CodigoCarrera: "3218", NombreCarrera: "INGENIERIA CIVIL INDUSTRIAL-PUERTO MONTT", CodigoAsignatura: "ELEC331", NombreAsignatura: "Transformación Empresarial", EstadoAsignatura: "CERRADO", Rut: "20061366", Dv: "K", Nombres: "Julio Cesar", ApPaterno: "Muñoz", ApMaterno: "Cardenas", NotaFinal: 5.1, Condicion: "APROBADO", Creditos: "7", AnioIngreso: "2017", PlanEstudios: "3218IC2013", Nivel: "7" },
+          { Sede: "02028", Año: "2024", Período: "2SEM", CodigoCarrera: "3218", NombreCarrera: "INGENIERIA CIVIL INDUSTRIAL-PUERTO MONTT", CodigoAsignatura: "ELEC331", NombreAsignatura: "Transformación Empresarial", EstadoAsignatura: "CERRADO", Rut: "20292033", Dv: "0", Nombres: "Katalina Ignacia", ApPaterno: "Nuñez", ApMaterno: "Inostroza", NotaFinal: 6.7, Condicion: "APROBADO", Creditos: "7", AnioIngreso: "2018", PlanEstudios: "3218IC2013", Nivel: "7" },
+          { Sede: "02028", Año: "2024", Período: "2SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "ELEC331", NombreAsignatura: "Transformación Empresarial", EstadoAsignatura: "CERRADO", Rut: "20658043", Dv: "7", Nombres: "Jeremias Alexander", ApPaterno: "Aguilar", ApMaterno: "Cuyul", NotaFinal: 6.7, Condicion: "APROBADO", Creditos: "7", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "7" },
+          { Sede: "02028", Año: "2024", Período: "2SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "ELEC331", NombreAsignatura: "Transformación Empresarial", EstadoAsignatura: "CERRADO", Rut: "19737854", Dv: "9", Nombres: "Manuel Andres", ApPaterno: "Paredes", ApMaterno: "Perez", NotaFinal: 1.0, Condicion: "REPROBADO", Creditos: "7", AnioIngreso: "2018", PlanEstudios: "3216II2013", Nivel: "7" },
+          { Sede: "02028", Año: "2025", Período: "2SEM", CodigoCarrera: "3206", NombreCarrera: "INGENIERÍA CIVIL EN OBRAS CIVILES- PUERTO MONTT", CodigoAsignatura: "FDCI02", NombreAsignatura: "Programación", EstadoAsignatura: "CERRADO", Rut: "22307933", Dv: "4", Nombres: "Héctor Ivan", ApPaterno: "Chiguay", ApMaterno: "Cosme", NotaFinal: 6.1, Condicion: "APROBADO", Creditos: "7", AnioIngreso: "2025", PlanEstudios: "320601", Nivel: "2" },
+          { Sede: "02028", Año: "2025", Período: "2SEM", CodigoCarrera: "3206", NombreCarrera: "INGENIERÍA CIVIL EN OBRAS CIVILES- PUERTO MONTT", CodigoAsignatura: "FDCI02", NombreAsignatura: "Programación", EstadoAsignatura: "CERRADO", Rut: "22423526", Dv: "7", Nombres: "Karla Estefanía", ApPaterno: "Velásquez", ApMaterno: "Vidal", NotaFinal: 1.0, Condicion: "REPROBADO", Creditos: "7", AnioIngreso: "2025", PlanEstudios: "320601", Nivel: "2" },
+          { Sede: "02028", Año: "2023", Período: "2SEM", CodigoCarrera: "32006", NombreCarrera: "INGENIERIA CIVIL-PUERTO MONTT", CodigoAsignatura: "FDCI03", NombreAsignatura: "Termodinámica", EstadoAsignatura: "CERRADO", Rut: "21507732", Dv: "2", Nombres: "Paloma Clarisa", ApPaterno: "Mansilla", ApMaterno: "Oyarzo", NotaFinal: 5.2, Condicion: "APROBADO", Creditos: "6", AnioIngreso: "2022", PlanEstudios: "32006DU497", Nivel: "4" },
+          { Sede: "02028", Año: "2025", Período: "2SEM", CodigoCarrera: "32006", NombreCarrera: "INGENIERIA CIVIL-PUERTO MONTT", CodigoAsignatura: "FDCI03", NombreAsignatura: "Termodinámica", EstadoAsignatura: "CERRADO", Rut: "21868260", Dv: "K", Nombres: "Pilar Francisca", ApPaterno: "Cárdenas", ApMaterno: "Castro", NotaFinal: 4.4, Condicion: "APROBADO", Creditos: "6", AnioIngreso: "2024", PlanEstudios: "32006DU497", Nivel: "4" },
+          { Sede: "02028", Año: "2024", Período: "2SEM", CodigoCarrera: "32006", NombreCarrera: "INGENIERIA CIVIL-PUERTO MONTT", CodigoAsignatura: "FDCI03", NombreAsignatura: "Termodinámica", EstadoAsignatura: "CERRADO", Rut: "21738407", Dv: "9", Nombres: "Scarleth Andrea", ApPaterno: "Inostroza", ApMaterno: "Sandoval", NotaFinal: 4.0, Condicion: "APROBADO", Creditos: "6", AnioIngreso: "2023", PlanEstudios: "32006DU497", Nivel: "4" }
+        ];
 
-  // Alumno con 3 reprobaciones en Programación (Aprobado posteriormente)
-  { Sede: "02028", Año: "2023", Período: "1SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "FDCI02", NombreAsignatura: "Programación", EstadoAsignatura: "CERRADO", Rut: "19837482", Dv: "K", Nombres: "Mariela Paz", ApPaterno: "Henriquez", ApMaterno: "Paredes", NotaFinal: 3.0, Condicion: "REPROBADO", Creditos: "7", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "2" },
-  { Sede: "02028", Año: "2023", Período: "2SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "FDCI02", NombreAsignatura: "Programación", EstadoAsignatura: "CERRADO", Rut: "19837482", Dv: "K", Nombres: "Mariela Paz", ApPaterno: "Henriquez", ApMaterno: "Paredes", NotaFinal: 2.5, Condicion: "REPROBADO", Creditos: "7", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "2" },
-  { Sede: "02028", Año: "2024", Período: "1SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "FDCI02", NombreAsignatura: "Programación", EstadoAsignatura: "CERRADO", Rut: "19837482", Dv: "K", Nombres: "Mariela Paz", ApPaterno: "Henriquez", ApMaterno: "Paredes", NotaFinal: 3.6, Condicion: "REPROBADO", Creditos: "7", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "2" },
-  { Sede: "02028", Año: "2024", Período: "2SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "FDCI02", NombreAsignatura: "Programación", EstadoAsignatura: "CERRADO", Rut: "19837482", Dv: "K", Nombres: "Mariela Paz", ApPaterno: "Henriquez", ApMaterno: "Paredes", NotaFinal: 4.8, Condicion: "APROBADO", Creditos: "7", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "2" },
+        // 5. Cambiamos la declaración de la función
+        function App() {
+          const [data, setData] = useState(DATOS_EJEMPLO);
+          const [activeTab, setActiveTab] = useState('alertas');
+          const [archivosCargados, setArchivosCargados] = useState([]);
+          
+          const [filtroCarrera, setFiltroCarrera] = useState('Todas');
+          const [filtroPlan, setFiltroPlan] = useState('Todos');
+          const [filtroAnioIngreso, setFiltroAnioIngreso] = useState('Todos');
+          const [filtroEstadoCierre, setFiltroEstadoCierre] = useState('CERRADO'); 
 
-  // Registros generales de aprobación/reprobación para estadísticas de torta e indicadores
-  { Sede: "02028", Año: "2025", Período: "2SEM", CodigoCarrera: "3218", NombreCarrera: "INGENIERIA CIVIL INDUSTRIAL-PUERTO MONTT", CodigoAsignatura: "ELEC331", NombreAsignatura: "Transformación Empresarial", EstadoAsignatura: "CERRADO", Rut: "20291774", Dv: "7", Nombres: "Jorge Ignacio", ApPaterno: "Nahuelhueique", ApMaterno: "Navarro", NotaFinal: 6.5, Condicion: "APROBADO", Creditos: "7", AnioIngreso: "2019", PlanEstudios: "3218IC2013", Nivel: "7" },
-  { Sede: "02028", Año: "2025", Período: "2SEM", CodigoCarrera: "3218", NombreCarrera: "INGENIERIA CIVIL INDUSTRIAL-PUERTO MONTT", CodigoAsignatura: "ELEC331", NombreAsignatura: "Transformación Empresarial", EstadoAsignatura: "CERRADO", Rut: "20061366", Dv: "K", Nombres: "Julio Cesar", ApPaterno: "Muñoz", ApMaterno: "Cardenas", NotaFinal: 5.1, Condicion: "APROBADO", Creditos: "7", AnioIngreso: "2017", PlanEstudios: "3218IC2013", Nivel: "7" },
-  { Sede: "02028", Año: "2024", Período: "2SEM", CodigoCarrera: "3218", NombreCarrera: "INGENIERIA CIVIL INDUSTRIAL-PUERTO MONTT", CodigoAsignatura: "ELEC331", NombreAsignatura: "Transformación Empresarial", EstadoAsignatura: "CERRADO", Rut: "20292033", Dv: "0", Nombres: "Katalina Ignacia", ApPaterno: "Nuñez", ApMaterno: "Inostroza", NotaFinal: 6.7, Condicion: "APROBADO", Creditos: "7", AnioIngreso: "2018", PlanEstudios: "3218IC2013", Nivel: "7" },
-  { Sede: "02028", Año: "2024", Período: "2SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "ELEC331", NombreAsignatura: "Transformación Empresarial", EstadoAsignatura: "CERRADO", Rut: "20658043", Dv: "7", Nombres: "Jeremias Alexander", ApPaterno: "Aguilar", ApMaterno: "Cuyul", NotaFinal: 6.7, Condicion: "APROBADO", Creditos: "7", AnioIngreso: "2019", PlanEstudios: "3216II2013", Nivel: "7" },
-  { Sede: "02028", Año: "2024", Período: "2SEM", CodigoCarrera: "3216", NombreCarrera: "INGENIERIA CIVIL EN INFORMATICA-PUERTO MONTT", CodigoAsignatura: "ELEC331", NombreAsignatura: "Transformación Empresarial", EstadoAsignatura: "CERRADO", Rut: "19737854", Dv: "9", Nombres: "Manuel Andres", ApPaterno: "Paredes", ApMaterno: "Perez", NotaFinal: 1.0, Condicion: "REPROBADO", Creditos: "7", AnioIngreso: "2018", PlanEstudios: "3216II2013", Nivel: "7" },
-  { Sede: "02028", Año: "2025", Período: "2SEM", CodigoCarrera: "3206", NombreCarrera: "INGENIERÍA CIVIL EN OBRAS CIVILES- PUERTO MONTT", CodigoAsignatura: "FDCI02", NombreAsignatura: "Programación", EstadoAsignatura: "CERRADO", Rut: "22307933", Dv: "4", Nombres: "Héctor Ivan", ApPaterno: "Chiguay", ApMaterno: "Cosme", NotaFinal: 6.1, Condicion: "APROBADO", Creditos: "7", AnioIngreso: "2025", PlanEstudios: "320601", Nivel: "2" },
-  { Sede: "02028", Año: "2025", Período: "2SEM", CodigoCarrera: "3206", NombreCarrera: "INGENIERÍA CIVIL EN OBRAS CIVILES- PUERTO MONTT", CodigoAsignatura: "FDCI02", NombreAsignatura: "Programación", EstadoAsignatura: "CERRADO", Rut: "22423526", Dv: "7", Nombres: "Karla Estefanía", ApPaterno: "Velásquez", ApMaterno: "Vidal", NotaFinal: 1.0, Condicion: "REPROBADO", Creditos: "7", AnioIngreso: "2025", PlanEstudios: "320601", Nivel: "2" },
-  { Sede: "02028", Año: "2023", Período: "2SEM", CodigoCarrera: "32006", NombreCarrera: "INGENIERIA CIVIL-PUERTO MONTT", CodigoAsignatura: "FDCI03", NombreAsignatura: "Termodinámica", EstadoAsignatura: "CERRADO", Rut: "21507732", Dv: "2", Nombres: "Paloma Clarisa", ApPaterno: "Mansilla", ApMaterno: "Oyarzo", NotaFinal: 5.2, Condicion: "APROBADO", Creditos: "6", AnioIngreso: "2022", PlanEstudios: "32006DU497", Nivel: "4" },
-  { Sede: "02028", Año: "2025", Período: "2SEM", CodigoCarrera: "32006", NombreCarrera: "INGENIERIA CIVIL-PUERTO MONTT", CodigoAsignatura: "FDCI03", NombreAsignatura: "Termodinámica", EstadoAsignatura: "CERRADO", Rut: "21868260", Dv: "K", Nombres: "Pilar Francisca", ApPaterno: "Cárdenas", ApMaterno: "Castro", NotaFinal: 4.4, Condicion: "APROBADO", Creditos: "6", AnioIngreso: "2024", PlanEstudios: "32006DU497", Nivel: "4" },
-  { Sede: "02028", Año: "2024", Período: "2SEM", CodigoCarrera: "32006", NombreCarrera: "INGENIERIA CIVIL-PUERTO MONTT", CodigoAsignatura: "FDCI03", NombreAsignatura: "Termodinámica", EstadoAsignatura: "CERRADO", Rut: "21738407", Dv: "9", Nombres: "Scarleth Andrea", ApPaterno: "Inostroza", ApMaterno: "Sandoval", NotaFinal: 4.0, Condicion: "APROBADO", Creditos: "6", AnioIngreso: "2023", PlanEstudios: "32006DU497", Nivel: "4" }
-];
+          const [limiteReprobaciones, setLimiteReprobaciones] = useState(3);
+          const [filtroEstadoAprobacion, setFiltroEstadoAprobacion] = useState('Todos'); 
+          const [busquedaAlumno, setBusquedaAlumno] = useState('');
 
-export default function App() {
-  const [data, setData] = useState(DATOS_EJEMPLO);
-  const [activeTab, setActiveTab] = useState('alertas');
-  const [archivosCargados, setArchivosCargados] = useState([]);
-  
-  // Filtros globales
-  const [filtroCarrera, setFiltroCarrera] = useState('Todas');
-  const [filtroPlan, setFiltroPlan] = useState('Todos');
-  const [filtroAnioIngreso, setFiltroAnioIngreso] = useState('Todos');
-  const [filtroEstadoCierre, setFiltroEstadoCierre] = useState('CERRADO'); // 'TODOS', 'CERRADO', 'ABIERTO'
+          const [notificacion, setNotificacion] = useState(null);
 
-  // Filtros específicos de pestaña Alertas de Permanencia
-  const [limiteReprobaciones, setLimiteReprobaciones] = useState(3);
-  const [filtroEstadoAprobacion, setFiltroEstadoAprobacion] = useState('Todos'); // 'Todos', 'Aprobado', 'No Aprobado'
-  const [busquedaAlumno, setBusquedaAlumno] = useState('');
-
-  // Notificación de éxito al cargar archivos
-  const [notificacion, setNotificacion] = useState(null);
-
-  // Formateador seguro para calificaciones
-  const formatNota = (nota) => {
-    if (nota === null || nota === undefined || nota === '') return 'S/N';
-    const num = typeof nota === 'number' ? nota : parseFloat(String(nota).replace(',', '.'));
-    return isNaN(num) ? String(nota) : num.toFixed(1);
-  };
-
-  // Función para parsear CSV robustamente respetando comillas y delimitadores comunes
-  const parseCSV = (text) => {
-    const lines = text.split(/\r?\n/);
-    if (lines.length < 2) return [];
-
-    // Intentar detectar separador (coma o punto y coma)
-    const headerLine = lines[0];
-    const separator = headerLine.includes(';') ? ';' : ',';
-
-    // Parsear una línea respetando comillas
-    const parseLine = (line) => {
-      const result = [];
-      let current = '';
-      let inQuotes = false;
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === separator && !inQuotes) {
-          result.push(current.trim());
-          current = '';
-        } else {
-          current += char;
-        }
-      }
-      result.push(current.trim());
-      return result;
-    };
-
-    const headers = parseLine(headerLine).map(h => h.replace(/^"|"$/g, '').trim());
-
-    // Índices de mapeo dinámico basados en nombres de tus archivos
-    const getIndex = (possibleNames) => {
-      return headers.findIndex(h => possibleNames.some(p => h.toLowerCase() === p.toLowerCase()));
-    };
-
-    const idx = {
-      sede: getIndex(['sede']),
-      anio: getIndex(['año', 'anio']),
-      periodo: getIndex(['período', 'periodo']),
-      codCarrera: getIndex(['código carrera', 'codigo carrera', 'cod. carrera', 'codigo_carrera']),
-      nomCarrera: getIndex(['nombre carrera', 'nombre_carrera']),
-      codAsig: getIndex(['código asignatura', 'codigo asignatura', 'cod. asignatura', 'codigo_asignatura']),
-      nomAsig: getIndex(['nombre asignatura', 'nombre_asignatura']),
-      estadoAsig: getIndex(['estado asignatura', 'estado_asignatura']),
-      rut: getIndex(['rut']),
-      dv: getIndex(['dv']),
-      nombres: getIndex(['nombres']),
-      apPaterno: getIndex(['ap.paterno', 'ap paterno', 'apellido paterno']),
-      apMaterno: getIndex(['ap.materno', 'ap materno', 'ap_materno', 'apellido materno']),
-      nota: getIndex(['nota final', 'nota_final', 'nota']),
-      condicion: getIndex(['condicion de alumno/carrera', 'condicion de alumno', 'condicion', 'condición de alumno/carrera']),
-      creditos: getIndex(['creditos', 'créditos']),
-      anioIngreso: getIndex(['año de ingreso', 'anio de ingreso', 'anio_ingreso']),
-      plan: getIndex(['plan de estudios', 'plan_de_estudios', 'plan']),
-      nivel: getIndex(['nivel'])
-    };
-
-    const rows = [];
-    for (let i = 1; i < lines.length; i++) {
-      if (!lines[i].trim()) continue;
-      const values = parseLine(lines[i]);
-      
-      const getValue = (headerIndex) => {
-        if (headerIndex === -1 || headerIndex >= values.length) return '';
-        return values[headerIndex].replace(/^"|"$/g, '').trim();
-      };
-
-      // Si no hay RUT válido en esta fila, omitirla
-      const rutVal = getValue(idx.rut);
-      if (!rutVal) continue;
-
-      // Limpieza de nota (reemplazar coma decimal por punto)
-      let notaRaw = getValue(idx.nota);
-      let notaNum = parseFloat(notaRaw.replace(',', '.'));
-      if (isNaN(notaNum)) notaNum = null;
-
-      rows.push({
-        Sede: getValue(idx.sede),
-        Año: getValue(idx.anio),
-        Período: getValue(idx.periodo),
-        CodigoCarrera: getValue(idx.codCarrera),
-        NombreCarrera: getValue(idx.nomCarrera),
-        CodigoAsignatura: getValue(idx.codAsig),
-        NombreAsignatura: getValue(idx.nomAsig),
-        EstadoAsignatura: getValue(idx.estadoAsig),
-        Rut: rutVal,
-        Dv: getValue(idx.dv),
-        Nombres: getValue(idx.nombres),
-        ApPaterno: getValue(idx.apPaterno),
-        ApMaterno: getValue(idx.apMaterno),
-        NotaFinal: notaNum,
-        Condicion: getValue(idx.condicion).toUpperCase(),
-        Creditos: getValue(idx.creditos),
-        AnioIngreso: getValue(idx.anioIngreso),
-        PlanEstudios: getValue(idx.plan),
-        Nivel: getValue(idx.nivel)
-      });
-    }
-
-    return rows;
-  };
-
-  // Manejo de carga de archivos CSV múltiples
-  const handleFileUpload = (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
-
-    let totalParsedRows = [];
-    let filesProcessed = 0;
-    const nuevosNombresArchivos = files.map(file => file.name);
-
-    files.forEach(file => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const text = event.target.result;
-        const parsed = parseCSV(text);
-        totalParsedRows = [...totalParsedRows, ...parsed];
-        filesProcessed++;
-
-        if (filesProcessed === files.length) {
-          // Unificar y actualizar datos en memoria
-          setData(prev => {
-            const key = (r) => `${r.Rut}-${r.CodigoAsignatura}-${r.Año}-${r.Período}`;
-            const existingMap = new Map();
-            const baseData = prev === DATOS_EJEMPLO ? [] : prev;
-            
-            [...baseData, ...totalParsedRows].forEach(item => {
-              existingMap.set(key(item), item);
-            });
-            return Array.from(existingMap.values());
-          });
-
-          // Registrar nombres de archivos cargados para la traza de integridad
-          setArchivosCargados(prev => {
-            const unicos = new Set([...prev, ...nuevosNombresArchivos]);
-            return Array.from(unicos);
-          });
-
-          setNotificacion({
-            tipo: 'success',
-            mensaje: `¡Excelente! Se cargaron con éxito ${totalParsedRows.length} registros desde ${files.length} archivo(s).`
-          });
-          setTimeout(() => setNotificacion(null), 6000);
-        }
-      };
-      reader.readAsText(file, 'UTF-8');
-    });
-  };
-
-  // Resetear la base de datos al estado por defecto
-  const handleResetData = () => {
-    setData(DATOS_EJEMPLO);
-    setArchivosCargados([]);
-    setFiltroCarrera('Todas');
-    setFiltroPlan('Todos');
-    setFiltroAnioIngreso('Todos');
-    setFiltroEstadoCierre('CERRADO');
-    setNotificacion({
-      tipo: 'info',
-      mensaje: 'Base de datos restaurada al set de demostración original.'
-    });
-    setTimeout(() => setNotificacion(null), 4000);
-  };
-
-  // Filtrado de la base de datos global según opciones seleccionadas
-  const dataFiltrada = useMemo(() => {
-    return data.filter(item => {
-      if (filtroCarrera !== 'Todas' && item.NombreCarrera !== filtroCarrera) return false;
-      if (filtroPlan !== 'Todos' && item.PlanEstudios !== filtroPlan) return false;
-      if (filtroAnioIngreso !== 'Todos' && item.AnioIngreso !== filtroAnioIngreso) return false;
-      if (filtroEstadoCierre !== 'TODOS' && item.EstadoAsignatura !== filtroEstadoCierre) return false;
-      return true;
-    });
-  }, [data, filtroCarrera, filtroPlan, filtroAnioIngreso, filtroEstadoCierre]);
-
-  // Listas únicas de filtros dinámicos basados en la data actual
-  const listaCarreras = useMemo(() => ['Todas', ...new Set(data.map(item => item.NombreCarrera).filter(Boolean))], [data]);
-  const listaPlanes = useMemo(() => ['Todos', ...new Set(data.map(item => item.PlanEstudios).filter(Boolean))], [data]);
-  const listaAniosIngreso = useMemo(() => ['Todos', ...new Set(data.map(item => item.AnioIngreso).filter(Boolean))].sort(), [data]);
-
-  // CÁLCULO DE ALERTAS DE PERMANENCIA (Foco Director de Carrera)
-  const alertasPermanencia = useMemo(() => {
-    const agrupado = {};
-
-    dataFiltrada.forEach(row => {
-      if (!row.Rut || !row.CodigoAsignatura) return;
-      const key = `${row.Rut}_${row.CodigoAsignatura}`;
-
-      if (!agrupado[key]) {
-        agrupado[key] = {
-          Rut: row.Rut,
-          Dv: row.Dv,
-          Nombres: row.Nombres,
-          ApPaterno: row.ApPaterno,
-          ApMaterno: row.ApMaterno,
-          CodigoAsignatura: row.CodigoAsignatura,
-          NombreAsignatura: row.NombreAsignatura,
-          NombreCarrera: row.NombreCarrera,
-          PlanEstudios: row.PlanEstudios,
-          Reprobaciones: 0,
-          Aprobado: false,
-          HistorialNotas: [],
-          Nivel: row.Nivel
-        };
-      }
-
-      agrupado[key].HistorialNotas.push({
-        Anio: row.Año,
-        Periodo: row.Período,
-        Nota: row.NotaFinal,
-        Condicion: row.Condicion,
-        EstadoAsig: row.EstadoAsignatura
-      });
-
-      if (row.Condicion === 'REPROBADO') {
-        agrupado[key].Reprobaciones += 1;
-      }
-      if (row.Condicion === 'APROBADO' || row.Condicion === 'CONVALIDADO') {
-        agrupado[key].Aprobado = true;
-      }
-    });
-
-    return Object.values(agrupado)
-      .filter(item => {
-        if (item.Reprobaciones < limiteReprobaciones) return false;
-        if (filtroEstadoAprobacion === 'Aprobado' && !item.Aprobado) return false;
-        if (filtroEstadoAprobacion === 'No Aprobado' && item.Aprobado) return false;
-
-        if (busquedaAlumno.trim() !== '') {
-          const query = busquedaAlumno.toLowerCase();
-          const nombreCompleto = `${item.Nombres} ${item.ApPaterno} ${item.ApMaterno}`.toLowerCase();
-          const rutCompleto = `${item.Rut}-${item.Dv}`.toLowerCase();
-          if (!nombreCompleto.includes(query) && !rutCompleto.includes(query)) return false;
-        }
-
-        return true;
-      })
-      .sort((a, b) => b.Reprobaciones - a.Reprobaciones);
-  }, [dataFiltrada, limiteReprobaciones, filtroEstadoAprobacion, busquedaAlumno]);
-
-  // CÁLCULO DE ASIGNATURAS CRÍTICAS
-  const asignaturasCriticas = useMemo(() => {
-    const conteo = {};
-    dataFiltrada.forEach(row => {
-      if (row.Condicion === 'REPROBADO') {
-        const id = row.CodigoAsignatura;
-        if (!conteo[id]) {
-          conteo[id] = {
-            Codigo: row.CodigoAsignatura,
-            Nombre: row.NombreAsignatura,
-            Reprobaciones: 0,
-            InscripcionesTotales: 0,
-            AlumnosUnicosReprobados: new Set()
+          const formatNota = (nota) => {
+            if (nota === null || nota === undefined || nota === '') return 'S/N';
+            const num = typeof nota === 'number' ? nota : parseFloat(String(nota).replace(',', '.'));
+            return isNaN(num) ? String(nota) : num.toFixed(1);
           };
-        }
-        conteo[id].Reprobaciones += 1;
-        conteo[id].AlumnosUnicosReprobados.add(row.Rut);
-      }
-    });
 
-    dataFiltrada.forEach(row => {
-      const id = row.CodigoAsignatura;
-      if (conteo[id]) {
-        conteo[id].InscripcionesTotales += 1;
-      }
-    });
+          const parseCSV = (text) => {
+            const lines = text.split(/\r?\n/);
+            if (lines.length < 2) return [];
 
-    return Object.values(conteo)
-      .map(item => ({
-        ...item,
-        AlumnosUnicos: item.AlumnosUnicosReprobados.size,
-        TasaReprobacion: item.InscripcionesTotales > 0 
-          ? ((item.Reprobaciones / item.InscripcionesTotales) * 100).toFixed(1) 
-          : '0'
-      }))
-      .sort((a, b) => b.Reprobaciones - a.Reprobaciones);
-  }, [dataFiltrada]);
+            const headerLine = lines[0];
+            const separator = headerLine.includes(';') ? ';' : ',';
 
-  // CÁLCULO DE INDICADORES GENERALES
-  const estadisticasGenerales = useMemo(() => {
-    const totalRegistrosValidos = dataFiltrada.filter(r => r.Condicion === 'APROBADO' || r.Condicion === 'REPROBADO');
-    const totalAprobados = totalRegistrosValidos.filter(r => r.Condicion === 'APROBADO').length;
-    const totalReprobados = totalRegistrosValidos.filter(r => r.Condicion === 'REPROBADO').length;
-    const tasaAprobacionGlobal = totalRegistrosValidos.length > 0
-      ? ((totalAprobados / totalRegistrosValidos.length) * 100).toFixed(1)
-      : '0.0';
+            const parseLine = (line) => {
+              const result = [];
+              let current = '';
+              let inQuotes = false;
+              for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                  inQuotes = !inQuotes;
+                } else if (char === separator && !inQuotes) {
+                  result.push(current.trim());
+                  current = '';
+                } else {
+                  current += char;
+                }
+              }
+              result.push(current.trim());
+              return result;
+            };
 
-    const alumnosUnicos = new Set(dataFiltrada.map(r => r.Rut)).size;
+            const headers = parseLine(headerLine).map(h => h.replace(/^"|"$/g, '').trim());
 
-    const alumnosEnRiesgoUnicos = new Set(
-      alertasPermanencia
-        .filter(al => al.Reprobaciones >= 3 && !al.Aprobado)
-        .map(al => al.Rut)
-    ).size;
+            const getIndex = (possibleNames) => {
+              return headers.findIndex(h => possibleNames.some(p => h.toLowerCase() === p.toLowerCase()));
+            };
 
-    return {
-      tasaAprobacionGlobal,
-      totalAprobados,
-      totalReprobados,
-      alumnosUnicos,
-      alumnosEnRiesgoUnicos,
-      totalEvaluaciones: totalRegistrosValidos.length
-    };
-  }, [dataFiltrada, alertasPermanencia]);
+            const idx = {
+              sede: getIndex(['sede']),
+              anio: getIndex(['año', 'anio']),
+              periodo: getIndex(['período', 'periodo']),
+              codCarrera: getIndex(['código carrera', 'codigo carrera', 'cod. carrera', 'codigo_carrera']),
+              nomCarrera: getIndex(['nombre carrera', 'nombre_carrera']),
+              codAsig: getIndex(['código asignatura', 'codigo asignatura', 'cod. asignatura', 'codigo_asignatura']),
+              nomAsig: getIndex(['nombre asignatura', 'nombre_asignatura']),
+              estadoAsig: getIndex(['estado asignatura', 'estado_asignatura']),
+              rut: getIndex(['rut']),
+              dv: getIndex(['dv']),
+              nombres: getIndex(['nombres']),
+              apPaterno: getIndex(['ap.paterno', 'ap paterno', 'apellido paterno']),
+              apMaterno: getIndex(['ap.materno', 'ap materno', 'ap_materno', 'apellido materno']),
+              nota: getIndex(['nota final', 'nota_final', 'nota']),
+              condicion: getIndex(['condicion de alumno/carrera', 'condicion de alumno', 'condicion', 'condición de alumno/carrera']),
+              creditos: getIndex(['creditos', 'créditos']),
+              anioIngreso: getIndex(['año de ingreso', 'anio de ingreso', 'anio_ingreso']),
+              plan: getIndex(['plan de estudios', 'plan_de_estudios', 'plan']),
+              nivel: getIndex(['nivel'])
+            };
 
-  // AVANCE CURRICULAR POR ESTUDIANTE
-  const avanceEstudiantes = useMemo(() => {
-    const alumnos = {};
-    dataFiltrada.forEach(row => {
-      if (!row.Rut) return;
-      if (!alumnos[row.Rut]) {
-        alumnos[row.Rut] = {
-          Rut: row.Rut,
-          Dv: row.Dv,
-          Nombre: `${row.Nombres} ${row.ApPaterno} ${row.ApMaterno}`,
-          Plan: row.PlanEstudios,
-          Carrera: row.NombreCarrera,
-          AsignaturasUnicas: new Set(),
-          AsignaturasAprobadas: new Set()
-        };
-      }
-      alumnos[row.Rut].AsignaturasUnicas.add(row.CodigoAsignatura);
-      if (row.Condicion === 'APROBADO' || row.Condicion === 'CONVALIDADO') {
-        alumnos[row.Rut].AsignaturasAprobadas.add(row.CodigoAsignatura);
-      }
-    });
-
-    return Object.values(alumnos).map(al => {
-      const total = al.AsignaturasUnicas.size;
-      const aprobadas = al.AsignaturasAprobadas.size;
-      return {
-        Rut: al.Rut,
-        Dv: al.Dv,
-        Nombre: al.Nombre,
-        Plan: al.Plan,
-        Carrera: al.Carrera,
-        TotalCursadas: total,
-        Aprobadas: aprobadas,
-        PorcentajeAvance: total > 0 ? ((aprobadas / total) * 100).toFixed(1) : '0'
-      };
-    }).sort((a, b) => parseFloat(a.PorcentajeAvance) - parseFloat(b.PorcentajeAvance));
-  }, [dataFiltrada]);
-
-  const handleExportarAlertasCSV = () => {
-    let headersCSV = "RUT,Nombres,Apellido Paterno,Apellido Materno,Carrera,Plan,Asignatura,Código Asignatura,Cant. Reprobaciones,Estado Actual\n";
-    let rowsCSV = alertasPermanencia.map(al => {
-      const nombreLimpiado = al.Nombres.replace(/,/g, '');
-      const paternoLimpiado = al.ApPaterno.replace(/,/g, '');
-      const maternoLimpiado = (al.ApMaterno || '').replace(/,/g, '');
-      const asigLimpiado = al.NombreAsignatura.replace(/,/g, '');
-      const carreraLimpiada = al.NombreCarrera.replace(/,/g, '');
-      const estadoStr = al.Aprobado ? "APROBADO POSTERIORMENTE" : "PENDIENTE (AUN REPROBADO)";
-
-      return `"${al.Rut}-${al.Dv}","${nombreLimpiado}","${paternoLimpiado}","${maternoLimpiado}","${carreraLimpiada}","${al.PlanEstudios}","${asigLimpiado}","${al.CodigoAsignatura}",${al.Reprobaciones},"${estadoStr}"`;
-    }).join("\n");
-
-    const blob = new Blob([headersCSV + rowsCSV], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Alertas_Permanencia_Docente_${new Date().toISOString().slice(0,10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans">
-      {/* HEADER DE LA APLICACIÓN */}
-      <header className="bg-slate-800 border-b border-slate-700 shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-rose-600 rounded-lg text-white font-bold shadow-lg shadow-rose-900/40">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-                SAPE <span className="text-xs bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded border border-rose-500/30">Módulo Permanencia</span>
-              </h1>
-              <p className="text-xs text-slate-400">Sistema de Alertas y Progreso de Estudiantes · Dirección de Carrera</p>
-            </div>
-          </div>
-
-          {/* INDICADORES GLOBALES DE INTEGRIDAD DE DATOS (REQUERIDO) */}
-          <div className="flex flex-wrap items-center gap-3 bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
-            <div className="text-right">
-              <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Total Datos Cargados</div>
-              <div className="text-sm font-bold text-indigo-400 font-mono">
-                {data.length.toLocaleString('es-CL')} registros
-              </div>
-            </div>
-            <div className="h-8 w-[1px] bg-slate-700"></div>
-            <div>
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold ${
-                archivosCargados.length > 0 
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                  : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-              }`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${archivosCargados.length > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
-                {archivosCargados.length > 0 ? `${archivosCargados.length} Archivos Real` : 'Modo Demo'}
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setActiveTab('carga')}
-              className={`px-4 py-2 rounded-md text-xs font-semibold flex items-center gap-2 transition-all ${
-                activeTab === 'carga' 
-                  ? 'bg-indigo-600 text-white shadow' 
-                  : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
-              }`}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-              </svg>
-              Cargar Archivos CSV
-            </button>
-            <button
-              onClick={handleResetData}
-              className="px-3.5 py-2 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 text-xs transition-colors"
-              title="Restaurar base de datos demostrativa"
-            >
-              Restablecer Demostración
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* NOTIFICACIÓN FLOTANTE */}
-      {notificacion && (
-        <div className="max-w-7xl mx-auto px-4 mt-4 sm:px-6 lg:px-8">
-          <div className={`p-4 rounded-lg border flex items-start gap-3 shadow-lg transition-all animate-bounce ${
-            notificacion.tipo === 'success' 
-              ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300' 
-              : 'bg-indigo-950/80 border-indigo-500/40 text-indigo-300'
-          }`}>
-            <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <div className="flex-1">
-              <p className="text-sm font-medium">{notificacion.mensaje}</p>
-            </div>
-            <button onClick={() => setNotificacion(null)} className="text-slate-400 hover:text-white text-xs">✕</button>
-          </div>
-        </div>
-      )}
-
-      {/* PANEL DE DETALLE DE ARCHIVOS CARGADOS */}
-      {archivosCargados.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 mt-4 sm:px-6 lg:px-8">
-          <div className="bg-slate-800/80 border border-indigo-500/30 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-md">
-            <div className="flex items-center gap-2">
-              <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-              <span className="text-xs text-slate-300 font-semibold">Bases de datos cargadas activamente:</span>
-            </div>
-            <div className="flex flex-wrap gap-1.5 max-w-full">
-              {archivosCargados.map((nom, i) => (
-                <span key={i} className="text-[10px] bg-slate-900 text-indigo-300 border border-slate-700 font-mono px-2 py-0.5 rounded-full">
-                  ✓ {nom}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* CONTROL DE FILTROS GLOBALES */}
-      <section className="max-w-7xl mx-auto px-4 mt-6 sm:px-6 lg:px-8">
-        <div className="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-xl">
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3.5 flex items-center gap-2">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-            </svg>
-            Filtros del Modelo Curricular ({dataFiltrada.length.toLocaleString('es-CL')} registros en la vista actual)
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Carrera */}
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Carrera Académica</label>
-              <select
-                value={filtroCarrera}
-                onChange={(e) => setFiltroCarrera(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-md py-2 px-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                {listaCarreras.map((c, idx) => (
-                  <option key={idx} value={c}>{c === 'Todas' ? 'Todas las carreras' : c.replace('-PUERTO MONTT', '')}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Plan de estudios */}
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Plan de Estudios</label>
-              <select
-                value={filtroPlan}
-                onChange={(e) => setFiltroPlan(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-md py-2 px-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                {listaPlanes.map((p, idx) => (
-                  <option key={idx} value={p}>{p === 'Todos' ? 'Todos los planes' : `Plan: ${p}`}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Cohorte de Ingreso */}
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Cohorte (Año de Ingreso)</label>
-              <select
-                value={filtroAnioIngreso}
-                onChange={(e) => setFiltroAnioIngreso(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700 rounded-md py-2 px-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                {listaAniosIngreso.map((a, idx) => (
-                  <option key={idx} value={a}>{a === 'Todos' ? 'Todos los años' : `Ingreso ${a}`}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Estado del Registro (Cerrado/Abierto) */}
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Estado del Semestre</label>
-              <div className="flex bg-slate-900 rounded-md p-1 border border-slate-700">
-                <button
-                  onClick={() => setFiltroEstadoCierre('TODOS')}
-                  className={`flex-1 text-center py-1 rounded text-xs font-medium transition-colors ${filtroEstadoCierre === 'TODOS' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
-                >
-                  Todos
-                </button>
-                <button
-                  onClick={() => setFiltroEstadoCierre('CERRADO')}
-                  className={`flex-1 text-center py-1 rounded text-xs font-medium transition-colors ${filtroEstadoCierre === 'CERRADO' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
-                  title="Sólo asignaturas finalizadas con nota"
-                >
-                  Histórico
-                </button>
-                <button
-                  onClick={() => setFiltroEstadoCierre('ABIERTO')}
-                  className={`flex-1 text-center py-1 rounded text-xs font-medium transition-colors ${filtroEstadoCierre === 'ABIERTO' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
-                  title="Semestre actual en desarrollo sin nota"
-                >
-                  En Curso
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* TABS DE NAVEGACIÓN */}
-      <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-        <div className="flex border-b border-slate-700 mb-6 overflow-x-auto whitespace-nowrap scrollbar-none">
-          <button
-            onClick={() => setActiveTab('alertas')}
-            className={`py-3 px-6 font-semibold text-sm border-b-2 transition-all flex items-center gap-2 ${
-              activeTab === 'alertas' 
-                ? 'border-rose-500 text-rose-400 bg-rose-950/20' 
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
-            Control de Permanencia (Alertas {alertasPermanencia.length})
-          </button>
-          
-          <button
-            onClick={() => setActiveTab('general')}
-            className={`py-3 px-6 font-semibold text-sm border-b-2 transition-all flex items-center gap-2 ${
-              activeTab === 'general' 
-                ? 'border-indigo-500 text-indigo-400 bg-indigo-950/20' 
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Vista General e Indicadores
-          </button>
-
-          <button
-            onClick={() => setActiveTab('asignaturas')}
-            className={`py-3 px-6 font-semibold text-sm border-b-2 transition-all flex items-center gap-2 ${
-              activeTab === 'asignaturas' 
-                ? 'border-indigo-500 text-indigo-400 bg-indigo-950/20' 
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Asignaturas Críticas
-          </button>
-
-          <button
-            onClick={() => setActiveTab('progreso')}
-            className={`py-3 px-6 font-semibold text-sm border-b-2 transition-all flex items-center gap-2 ${
-              activeTab === 'progreso' 
-                ? 'border-indigo-500 text-indigo-400 bg-indigo-950/20' 
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Avance por Estudiante
-          </button>
-        </div>
-
-        {/* CONTENIDO CONTENEDOR TABS */}
-        <div className="space-y-6">
-          
-          {/* PESTAÑA: ALERTAS DE PERMANENCIA */}
-          {activeTab === 'alertas' && (
-            <div className="space-y-6">
+            const rows = [];
+            for (let i = 1; i < lines.length; i++) {
+              if (!lines[i].trim()) continue;
+              const values = parseLine(lines[i]);
               
-              {/* FILTROS EXCLUSIVOS DE ALERTAS */}
-              <div className="bg-slate-800 p-5 rounded-xl border border-rose-500/20 shadow-lg">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-700">
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
-                      <svg className="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              const getValue = (headerIndex) => {
+                if (headerIndex === -1 || headerIndex >= values.length) return '';
+                return values[headerIndex].replace(/^"|"$/g, '').trim();
+              };
+
+              const rutVal = getValue(idx.rut);
+              if (!rutVal) continue;
+
+              let notaRaw = getValue(idx.nota);
+              let notaNum = parseFloat(notaRaw.replace(',', '.'));
+              if (isNaN(notaNum)) notaNum = null;
+
+              rows.push({
+                Sede: getValue(idx.sede),
+                Año: getValue(idx.anio),
+                Período: getValue(idx.periodo),
+                CodigoCarrera: getValue(idx.codCarrera),
+                NombreCarrera: getValue(idx.nomCarrera),
+                CodigoAsignatura: getValue(idx.codAsig),
+                NombreAsignatura: getValue(idx.nomAsig),
+                EstadoAsignatura: getValue(idx.estadoAsig),
+                Rut: rutVal,
+                Dv: getValue(idx.dv),
+                Nombres: getValue(idx.nombres),
+                ApPaterno: getValue(idx.apPaterno),
+                ApMaterno: getValue(idx.apMaterno),
+                NotaFinal: notaNum,
+                Condicion: getValue(idx.condicion).toUpperCase(),
+                Creditos: getValue(idx.creditos),
+                AnioIngreso: getValue(idx.anioIngreso),
+                PlanEstudios: getValue(idx.plan),
+                Nivel: getValue(idx.nivel)
+              });
+            }
+
+            return rows;
+          };
+
+          const handleFileUpload = (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+
+            let totalParsedRows = [];
+            let filesProcessed = 0;
+            const nuevosNombresArchivos = files.map(file => file.name);
+
+            files.forEach(file => {
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                const text = event.target.result;
+                const parsed = parseCSV(text);
+                totalParsedRows = [...totalParsedRows, ...parsed];
+                filesProcessed++;
+
+                if (filesProcessed === files.length) {
+                  setData(prev => {
+                    const key = (r) => `${r.Rut}-${r.CodigoAsignatura}-${r.Año}-${r.Período}`;
+                    const existingMap = new Map();
+                    const baseData = prev === DATOS_EJEMPLO ? [] : prev;
+                    
+                    [...baseData, ...totalParsedRows].forEach(item => {
+                      existingMap.set(key(item), item);
+                    });
+                    return Array.from(existingMap.values());
+                  });
+
+                  setArchivosCargados(prev => {
+                    const unicos = new Set([...prev, ...nuevosNombresArchivos]);
+                    return Array.from(unicos);
+                  });
+
+                  setNotificacion({
+                    tipo: 'success',
+                    mensaje: `¡Excelente! Se cargaron con éxito ${totalParsedRows.length} registros desde ${files.length} archivo(s).`
+                  });
+                  setTimeout(() => setNotificacion(null), 6000);
+                }
+              };
+              reader.readAsText(file, 'UTF-8');
+            });
+          };
+
+          const handleResetData = () => {
+            setData(DATOS_EJEMPLO);
+            setArchivosCargados([]);
+            setFiltroCarrera('Todas');
+            setFiltroPlan('Todos');
+            setFiltroAnioIngreso('Todos');
+            setFiltroEstadoCierre('CERRADO');
+            setNotificacion({
+              tipo: 'info',
+              mensaje: 'Base de datos restaurada al set de demostración original.'
+            });
+            setTimeout(() => setNotificacion(null), 4000);
+          };
+
+          const dataFiltrada = useMemo(() => {
+            return data.filter(item => {
+              if (filtroCarrera !== 'Todas' && item.NombreCarrera !== filtroCarrera) return false;
+              if (filtroPlan !== 'Todos' && item.PlanEstudios !== filtroPlan) return false;
+              if (filtroAnioIngreso !== 'Todos' && item.AnioIngreso !== filtroAnioIngreso) return false;
+              if (filtroEstadoCierre !== 'TODOS' && item.EstadoAsignatura !== filtroEstadoCierre) return false;
+              return true;
+            });
+          }, [data, filtroCarrera, filtroPlan, filtroAnioIngreso, filtroEstadoCierre]);
+
+          const listaCarreras = useMemo(() => ['Todas', ...new Set(data.map(item => item.NombreCarrera).filter(Boolean))], [data]);
+          const listaPlanes = useMemo(() => ['Todos', ...new Set(data.map(item => item.PlanEstudios).filter(Boolean))], [data]);
+          const listaAniosIngreso = useMemo(() => ['Todos', ...new Set(data.map(item => item.AnioIngreso).filter(Boolean))].sort(), [data]);
+
+          const alertasPermanencia = useMemo(() => {
+            const agrupado = {};
+
+            dataFiltrada.forEach(row => {
+              if (!row.Rut || !row.CodigoAsignatura) return;
+              const key = `${row.Rut}_${row.CodigoAsignatura}`;
+
+              if (!agrupado[key]) {
+                agrupado[key] = {
+                  Rut: row.Rut,
+                  Dv: row.Dv,
+                  Nombres: row.Nombres,
+                  ApPaterno: row.ApPaterno,
+                  ApMaterno: row.ApMaterno,
+                  CodigoAsignatura: row.CodigoAsignatura,
+                  NombreAsignatura: row.NombreAsignatura,
+                  NombreCarrera: row.NombreCarrera,
+                  PlanEstudios: row.PlanEstudios,
+                  Reprobaciones: 0,
+                  Aprobado: false,
+                  HistorialNotas: [],
+                  Nivel: row.Nivel
+                };
+              }
+
+              agrupado[key].HistorialNotas.push({
+                Anio: row.Año,
+                Periodo: row.Período,
+                Nota: row.NotaFinal,
+                Condicion: row.Condicion,
+                EstadoAsig: row.EstadoAsignatura
+              });
+
+              if (row.Condicion === 'REPROBADO') {
+                agrupado[key].Reprobaciones += 1;
+              }
+              if (row.Condicion === 'APROBADO' || row.Condicion === 'CONVALIDADO') {
+                agrupado[key].Aprobado = true;
+              }
+            });
+
+            return Object.values(agrupado)
+              .filter(item => {
+                if (item.Reprobaciones < limiteReprobaciones) return false;
+                if (filtroEstadoAprobacion === 'Aprobado' && !item.Aprobado) return false;
+                if (filtroEstadoAprobacion === 'No Aprobado' && item.Aprobado) return false;
+
+                if (busquedaAlumno.trim() !== '') {
+                  const query = busquedaAlumno.toLowerCase();
+                  const nombreCompleto = `${item.Nombres} ${item.ApPaterno} ${item.ApMaterno}`.toLowerCase();
+                  const rutCompleto = `${item.Rut}-${item.Dv}`.toLowerCase();
+                  if (!nombreCompleto.includes(query) && !rutCompleto.includes(query)) return false;
+                }
+
+                return true;
+              })
+              .sort((a, b) => b.Reprobaciones - a.Reprobaciones);
+          }, [dataFiltrada, limiteReprobaciones, filtroEstadoAprobacion, busquedaAlumno]);
+
+          const asignaturasCriticas = useMemo(() => {
+            const conteo = {};
+            dataFiltrada.forEach(row => {
+              if (row.Condicion === 'REPROBADO') {
+                const id = row.CodigoAsignatura;
+                if (!conteo[id]) {
+                  conteo[id] = {
+                    Codigo: row.CodigoAsignatura,
+                    Nombre: row.NombreAsignatura,
+                    Reprobaciones: 0,
+                    InscripcionesTotales: 0,
+                    AlumnosUnicosReprobados: new Set()
+                  };
+                }
+                conteo[id].Reprobaciones += 1;
+                conteo[id].AlumnosUnicosReprobados.add(row.Rut);
+              }
+            });
+
+            dataFiltrada.forEach(row => {
+              const id = row.CodigoAsignatura;
+              if (conteo[id]) {
+                conteo[id].InscripcionesTotales += 1;
+              }
+            });
+
+            return Object.values(conteo)
+              .map(item => ({
+                ...item,
+                AlumnosUnicos: item.AlumnosUnicosReprobados.size,
+                TasaReprobacion: item.InscripcionesTotales > 0 
+                  ? ((item.Reprobaciones / item.InscripcionesTotales) * 100).toFixed(1) 
+                  : '0'
+              }))
+              .sort((a, b) => b.Reprobaciones - a.Reprobaciones);
+          }, [dataFiltrada]);
+
+          const estadisticasGenerales = useMemo(() => {
+            const totalRegistrosValidos = dataFiltrada.filter(r => r.Condicion === 'APROBADO' || r.Condicion === 'REPROBADO');
+            const totalAprobados = totalRegistrosValidos.filter(r => r.Condicion === 'APROBADO').length;
+            const totalReprobados = totalRegistrosValidos.filter(r => r.Condicion === 'REPROBADO').length;
+            const tasaAprobacionGlobal = totalRegistrosValidos.length > 0
+              ? ((totalAprobados / totalRegistrosValidos.length) * 100).toFixed(1)
+              : '0.0';
+
+            const alumnosUnicos = new Set(dataFiltrada.map(r => r.Rut)).size;
+
+            const alumnosEnRiesgoUnicos = new Set(
+              alertasPermanencia
+                .filter(al => al.Reprobaciones >= 3 && !al.Aprobado)
+                .map(al => al.Rut)
+            ).size;
+
+            return {
+              tasaAprobacionGlobal,
+              totalAprobados,
+              totalReprobados,
+              alumnosUnicos,
+              alumnosEnRiesgoUnicos,
+              totalEvaluaciones: totalRegistrosValidos.length
+            };
+          }, [dataFiltrada, alertasPermanencia]);
+
+          const avanceEstudiantes = useMemo(() => {
+            const alumnos = {};
+            dataFiltrada.forEach(row => {
+              if (!row.Rut) return;
+              if (!alumnos[row.Rut]) {
+                alumnos[row.Rut] = {
+                  Rut: row.Rut,
+                  Dv: row.Dv,
+                  Nombre: `${row.Nombres} ${row.ApPaterno} ${row.ApMaterno}`,
+                  Plan: row.PlanEstudios,
+                  Carrera: row.NombreCarrera,
+                  AsignaturasUnicas: new Set(),
+                  AsignaturasAprobadas: new Set()
+                };
+              }
+              alumnos[row.Rut].AsignaturasUnicas.add(row.CodigoAsignatura);
+              if (row.Condicion === 'APROBADO' || row.Condicion === 'CONVALIDADO') {
+                alumnos[row.Rut].AsignaturasAprobadas.add(row.CodigoAsignatura);
+              }
+            });
+
+            return Object.values(alumnos).map(al => {
+              const total = al.AsignaturasUnicas.size;
+              const aprobadas = al.AsignaturasAprobadas.size;
+              return {
+                Rut: al.Rut,
+                Dv: al.Dv,
+                Nombre: al.Nombre,
+                Plan: al.Plan,
+                Carrera: al.Carrera,
+                TotalCursadas: total,
+                Aprobadas: aprobadas,
+                PorcentajeAvance: total > 0 ? ((aprobadas / total) * 100).toFixed(1) : '0'
+              };
+            }).sort((a, b) => parseFloat(a.PorcentajeAvance) - parseFloat(b.PorcentajeAvance));
+          }, [dataFiltrada]);
+
+          const handleExportarAlertasCSV = () => {
+            let headersCSV = "RUT,Nombres,Apellido Paterno,Apellido Materno,Carrera,Plan,Asignatura,Código Asignatura,Cant. Reprobaciones,Estado Actual\n";
+            let rowsCSV = alertasPermanencia.map(al => {
+              const nombreLimpiado = al.Nombres.replace(/,/g, '');
+              const paternoLimpiado = al.ApPaterno.replace(/,/g, '');
+              const maternoLimpiado = (al.ApMaterno || '').replace(/,/g, '');
+              const asigLimpiado = al.NombreAsignatura.replace(/,/g, '');
+              const carreraLimpiada = al.NombreCarrera.replace(/,/g, '');
+              const estadoStr = al.Aprobado ? "APROBADO POSTERIORMENTE" : "PENDIENTE (AUN REPROBADO)";
+
+              return `"${al.Rut}-${al.Dv}","${nombreLimpiado}","${paternoLimpiado}","${maternoLimpiado}","${carreraLimpiada}","${al.PlanEstudios}","${asigLimpiado}","${al.CodigoAsignatura}",${al.Reprobaciones},"${estadoStr}"`;
+            }).join("\n");
+
+            const blob = new Blob([headersCSV + rowsCSV], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Alertas_Permanencia_Docente_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          };
+
+          return (
+            <div className="min-h-screen bg-slate-900 text-slate-100 font-sans">
+              <header className="bg-slate-800 border-b border-slate-700 shadow-md sticky top-0 z-50">
+                <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-rose-600 rounded-lg text-white font-bold shadow-lg shadow-rose-900/40">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                       </svg>
-                      Filtros de Alerta Temprana
-                    </h3>
-                    <p className="text-xs text-slate-400">Establece el nivel de reprobaciones sucesivas de tus estudiantes para desplegar el listado de control.</p>
+                    </div>
+                    <div>
+                      <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+                        SAPE <span className="text-xs bg-rose-500/20 text-rose-400 px-2 py-0.5 rounded border border-rose-500/30">Módulo Permanencia</span>
+                      </h1>
+                      <p className="text-xs text-slate-400">Sistema de Alertas y Progreso de Estudiantes · Dirección de Carrera</p>
+                    </div>
                   </div>
-                  <button
-                    onClick={handleExportarAlertasCSV}
-                    disabled={alertasPermanencia.length === 0}
-                    className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold py-2 px-4 rounded text-xs transition-colors flex items-center gap-2 self-start md:self-auto"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+
+                  <div className="flex flex-wrap items-center gap-3 bg-slate-900/60 p-2.5 rounded-lg border border-slate-700">
+                    <div className="text-right">
+                      <div className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Total Datos Cargados</div>
+                      <div className="text-sm font-bold text-indigo-400 font-mono">
+                        {data.length.toLocaleString('es-CL')} registros
+                      </div>
+                    </div>
+                    <div className="h-8 w-[1px] bg-slate-700"></div>
+                    <div>
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold ${
+                        archivosCargados.length > 0 
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                          : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${archivosCargados.length > 0 ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
+                        {archivosCargados.length > 0 ? `${archivosCargados.length} Archivos Real` : 'Modo Demo'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      onClick={() => setActiveTab('carga')}
+                      className={`px-4 py-2 rounded-md text-xs font-semibold flex items-center gap-2 transition-all ${
+                        activeTab === 'carga' 
+                          ? 'bg-indigo-600 text-white shadow' 
+                          : 'bg-slate-700 hover:bg-slate-600 text-slate-200'
+                      }`}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                      </svg>
+                      Cargar Archivos CSV
+                    </button>
+                    <button
+                      onClick={handleResetData}
+                      className="px-3.5 py-2 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 text-xs transition-colors"
+                      title="Restaurar base de datos demostrativa"
+                    >
+                      Restablecer Demostración
+                    </button>
+                  </div>
+                </div>
+              </header>
+
+              {notificacion && (
+                <div className="max-w-7xl mx-auto px-4 mt-4 sm:px-6 lg:px-8">
+                  <div className={`p-4 rounded-lg border flex items-start gap-3 shadow-lg transition-all animate-bounce ${
+                    notificacion.tipo === 'success' 
+                      ? 'bg-emerald-950/80 border-emerald-500/40 text-emerald-300' 
+                      : 'bg-indigo-950/80 border-indigo-500/40 text-indigo-300'
+                  }`}>
+                    <svg className="w-5 h-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Exportar Alertas a CSV/Excel
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{notificacion.mensaje}</p>
+                    </div>
+                    <button onClick={() => setNotificacion(null)} className="text-slate-400 hover:text-white text-xs">✕</button>
+                  </div>
+                </div>
+              )}
+
+              {archivosCargados.length > 0 && (
+                <div className="max-w-7xl mx-auto px-4 mt-4 sm:px-6 lg:px-8">
+                  <div className="bg-slate-800/80 border border-indigo-500/30 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 shadow-md">
+                    <div className="flex items-center gap-2">
+                      <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span className="text-xs text-slate-300 font-semibold">Bases de datos cargadas activamente:</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 max-w-full">
+                      {archivosCargados.map((nom, i) => (
+                        <span key={i} className="text-[10px] bg-slate-900 text-indigo-300 border border-slate-700 font-mono px-2 py-0.5 rounded-full">
+                          ✓ {nom}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <section className="max-w-7xl mx-auto px-4 mt-6 sm:px-6 lg:px-8">
+                <div className="bg-slate-800 rounded-xl p-5 border border-slate-700 shadow-xl">
+                  <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3.5 flex items-center gap-2">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
+                    Filtros del Modelo Curricular ({dataFiltrada.length.toLocaleString('es-CL')} registros en la vista actual)
+                  </h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Carrera Académica</label>
+                      <select
+                        value={filtroCarrera}
+                        onChange={(e) => setFiltroCarrera(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-md py-2 px-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        {listaCarreras.map((c, idx) => (
+                          <option key={idx} value={c}>{c === 'Todas' ? 'Todas las carreras' : c.replace('-PUERTO MONTT', '')}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Plan de Estudios</label>
+                      <select
+                        value={filtroPlan}
+                        onChange={(e) => setFiltroPlan(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-md py-2 px-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        {listaPlanes.map((p, idx) => (
+                          <option key={idx} value={p}>{p === 'Todos' ? 'Todos los planes' : `Plan: ${p}`}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Cohorte (Año de Ingreso)</label>
+                      <select
+                        value={filtroAnioIngreso}
+                        onChange={(e) => setFiltroAnioIngreso(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-md py-2 px-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        {listaAniosIngreso.map((a, idx) => (
+                          <option key={idx} value={a}>{a === 'Todos' ? 'Todos los años' : `Ingreso ${a}`}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1">Estado del Semestre</label>
+                      <div className="flex bg-slate-900 rounded-md p-1 border border-slate-700">
+                        <button
+                          onClick={() => setFiltroEstadoCierre('TODOS')}
+                          className={`flex-1 text-center py-1 rounded text-xs font-medium transition-colors ${filtroEstadoCierre === 'TODOS' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                        >
+                          Todos
+                        </button>
+                        <button
+                          onClick={() => setFiltroEstadoCierre('CERRADO')}
+                          className={`flex-1 text-center py-1 rounded text-xs font-medium transition-colors ${filtroEstadoCierre === 'CERRADO' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                          title="Sólo asignaturas finalizadas con nota"
+                        >
+                          Histórico
+                        </button>
+                        <button
+                          onClick={() => setFiltroEstadoCierre('ABIERTO')}
+                          className={`flex-1 text-center py-1 rounded text-xs font-medium transition-colors ${filtroEstadoCierre === 'ABIERTO' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                          title="Semestre actual en desarrollo sin nota"
+                        >
+                          En Curso
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+                <div className="flex border-b border-slate-700 mb-6 overflow-x-auto whitespace-nowrap scrollbar-none">
+                  <button
+                    onClick={() => setActiveTab('alertas')}
+                    className={`py-3 px-6 font-semibold text-sm border-b-2 transition-all flex items-center gap-2 ${
+                      activeTab === 'alertas' 
+                        ? 'border-rose-500 text-rose-400 bg-rose-950/20' 
+                        : 'border-transparent text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+                    Control de Permanencia (Alertas {alertasPermanencia.length})
+                  </button>
+                  
+                  <button
+                    onClick={() => setActiveTab('general')}
+                    className={`py-3 px-6 font-semibold text-sm border-b-2 transition-all flex items-center gap-2 ${
+                      activeTab === 'general' 
+                        ? 'border-indigo-500 text-indigo-400 bg-indigo-950/20' 
+                        : 'border-transparent text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    Vista General e Indicadores
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('asignaturas')}
+                    className={`py-3 px-6 font-semibold text-sm border-b-2 transition-all flex items-center gap-2 ${
+                      activeTab === 'asignaturas' 
+                        ? 'border-indigo-500 text-indigo-400 bg-indigo-950/20' 
+                        : 'border-transparent text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    Asignaturas Críticas
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('progreso')}
+                    className={`py-3 px-6 font-semibold text-sm border-b-2 transition-all flex items-center gap-2 ${
+                      activeTab === 'progreso' 
+                        ? 'border-indigo-500 text-indigo-400 bg-indigo-950/20' 
+                        : 'border-transparent text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    Avance por Estudiante
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Selector Nivel Crítico */}
-                  <div>
-                    <label className="block text-xs text-slate-400 mb-2 font-medium">
-                      Umbral de Reprobaciones Sucesivas: <span className="text-rose-400 font-bold text-sm">≥ {limiteReprobaciones} veces</span>
-                    </label>
-                    <input
-                      type="range"
-                      min="1"
-                      max="5"
-                      value={limiteReprobaciones}
-                      onChange={(e) => setLimiteReprobaciones(parseInt(e.target.value))}
-                      className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-rose-500"
-                    />
-                    <div className="flex justify-between text-[10px] text-slate-500 px-1 mt-1">
-                      <span>1 Reprobado</span>
-                      <span>2</span>
-                      <span>3 (Estándar)</span>
-                      <span>4</span>
-                      <span>5+ Crítico</span>
-                    </div>
-                  </div>
-
-                  {/* Estado de Aprobación de la Asignatura */}
-                  <div>
-                    <label className="block text-xs text-slate-400 mb-1.5 font-medium">¿Logró aprobar la asignatura posteriormente?</label>
-                    <div className="flex bg-slate-900 rounded-md p-1 border border-slate-700">
-                      <button
-                        onClick={() => setFiltroEstadoAprobacion('Todos')}
-                        className={`flex-1 text-center py-1.5 rounded text-xs transition-colors ${filtroEstadoAprobacion === 'Todos' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
-                      >
-                        Todos
-                      </button>
-                      <button
-                        onClick={() => setFiltroEstadoAprobacion('No Aprobado')}
-                        className={`flex-1 text-center py-1.5 rounded text-xs transition-colors ${filtroEstadoAprobacion === 'No Aprobado' ? 'bg-rose-600 text-white font-medium' : 'text-slate-400 hover:text-slate-200'}`}
-                        title="Estudiantes que arrastran la asignatura reprobada y aún no la aprueban"
-                      >
-                        Aún Pendientes 🔴
-                      </button>
-                      <button
-                        onClick={() => setFiltroEstadoAprobacion('Aprobado')}
-                        className={`flex-1 text-center py-1.5 rounded text-xs transition-colors ${filtroEstadoAprobacion === 'Aprobado' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
-                        title="Estudiantes que reprobaron muchas veces pero ya lograron aprobar"
-                      >
-                        Ya Superado 🟢
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Buscador de Alumno */}
-                  <div>
-                    <label className="block text-xs text-slate-400 mb-1.5 font-medium">Buscador Inteligente</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        placeholder="Buscar por Nombre, Apellido o RUT..."
-                        value={busquedaAlumno}
-                        onChange={(e) => setBusquedaAlumno(e.target.value)}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-md py-2 pl-9 pr-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500"
-                      />
-                      <svg className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* LISTADO DE ALERTAS */}
-              <div className="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden">
-                <div className="px-5 py-4 bg-slate-800 border-b border-slate-700 flex justify-between items-center">
-                  <h3 className="font-bold text-white text-base">
-                    Estudiantes Identificados ({alertasPermanencia.length} casos críticos)
-                  </h3>
-                  <span className="text-xs bg-rose-500/10 text-rose-400 px-3 py-1 rounded-full border border-rose-500/20">
-                    Foco: Reprobaciones ≥ {limiteReprobaciones}
-                  </span>
-                </div>
-
-                {alertasPermanencia.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <svg className="w-16 h-16 text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <p className="text-slate-300 font-semibold text-base">¡No se encontraron casos de alerta!</p>
-                    <p className="text-slate-500 text-sm mt-1">Intenta reducir el umbral de reprobaciones o cambiar los filtros de búsqueda.</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                      <thead>
-                        <tr className="bg-slate-900 border-b border-slate-700 text-slate-400 text-xs uppercase tracking-wider">
-                          <th className="py-3 px-5">RUT</th>
-                          <th className="py-3 px-5">Estudiante</th>
-                          <th className="py-3 px-5">Carrera / Plan</th>
-                          <th className="py-3 px-5">Asignatura Crítica</th>
-                          <th className="py-3 px-5 text-center">Nº Reprobados</th>
-                          <th className="py-3 px-5">Estatus Actual</th>
-                          <th className="py-3 px-5">Historial de Calificaciones</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-700 text-sm text-slate-300">
-                        {alertasPermanencia.map((alerta, index) => {
-                          const ultimasNotas = alerta.HistorialNotas.map((n, i) => (
-                            <span 
-                              key={i} 
-                              className={`inline-block px-1.5 py-0.5 text-xs rounded font-mono mr-1.5 ${
-                                n.Condicion === 'REPROBADO' 
-                                  ? 'bg-rose-950 text-rose-300 border border-rose-800/50' 
-                                  : 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
-                              }`}
-                              title={`Semestre: ${n.Anio}-${n.Periodo} (${n.EstadoAsig})`}
-                            >
-                              {formatNota(n.Nota)}
-                            </span>
-                          ));
-
-                          return (
-                            <tr key={index} className="hover:bg-slate-700/50 transition-colors">
-                              <td className="py-4 px-5 font-mono font-medium text-slate-100">
-                                {alerta.Rut}-{alerta.Dv}
-                              </td>
-                              <td className="py-4 px-5">
-                                <p className="font-semibold text-white">{alerta.ApPaterno} {alerta.ApMaterno}, {alerta.Nombres}</p>
-                                <p className="text-xs text-slate-400">Nivel curricular sugerido: {alerta.Nivel || 'N/A'}</p>
-                              </td>
-                              <td className="py-4 px-5">
-                                <p className="text-xs font-medium text-slate-200 max-w-[200px] truncate" title={alerta.NombreCarrera}>
-                                  {alerta.NombreCarrera.replace('-PUERTO MONTT', '')}
-                                </p>
-                                <p className="text-[11px] font-mono text-slate-400">Plan: {alerta.PlanEstudios}</p>
-                              </td>
-                              <td className="py-4 px-5">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-xs bg-slate-900 px-2 py-0.5 rounded text-slate-400 font-mono">
-                                    {alerta.CodigoAsignatura}
-                                  </span>
-                                  <span className="font-medium text-slate-200">{alerta.NombreAsignatura}</span>
-                                </div>
-                              </td>
-                              <td className="py-4 px-5 text-center">
-                                <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm ${
-                                  alerta.Reprobaciones >= 4 
-                                    ? 'bg-rose-600 text-white ring-4 ring-rose-950' 
-                                    : 'bg-amber-600 text-white ring-4 ring-amber-950'
-                                }`}>
-                                  {alerta.Reprobaciones}
-                                </span>
-                              </td>
-                              <td className="py-4 px-5">
-                                {alerta.Aprobado ? (
-                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800/50">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                                    Superada (Aprobado)
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-950 text-rose-400 border border-rose-800/50 animate-pulse">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                    Aún No Aprobada
-                                  </span>
-                                )}
-                              </td>
-                              <td className="py-4 px-5">
-                                <div className="flex flex-wrap gap-1">
-                                  {ultimasNotas}
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* PESTAÑA: VISTA GENERAL E INDICADORES */}
-          {activeTab === 'general' && (
-            <div className="space-y-6">
-              
-              {/* CARTAS DE KPI */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-                {/* KPI 1 */}
-                <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tasa Aprobación Global</p>
-                    <h3 className="text-3xl font-extrabold text-white mt-1">{estadisticasGenerales.tasaAprobacionGlobal}%</h3>
-                    <p className="text-xs text-slate-400 mt-1">Aprobados vs inscritos con nota</p>
-                  </div>
-                  <div className="p-3 bg-indigo-600/20 text-indigo-400 rounded-lg">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
-
-                {/* KPI 2 */}
-                <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Alumnos en Alerta Crítica</p>
-                    <h3 className="text-3xl font-extrabold text-rose-400 mt-1">{estadisticasGenerales.alumnosEnRiesgoUnicos}</h3>
-                    <p className="text-xs text-rose-300/60 mt-1">Con ≥3 reprobados activos</p>
-                  </div>
-                  <div className="p-3 bg-rose-600/20 text-rose-400 rounded-lg">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
-                  </div>
-                </div>
-
-                {/* KPI 3 */}
-                <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Matrícula Analizada</p>
-                    <h3 className="text-3xl font-extrabold text-white mt-1">{estadisticasGenerales.alumnosUnicos}</h3>
-                    <p className="text-xs text-slate-400 mt-1">Estudiantes únicos en filtro</p>
-                  </div>
-                  <div className="p-3 bg-emerald-600/20 text-emerald-400 rounded-lg">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                  </div>
-                </div>
-
-                {/* KPI 4 - AHORA INDICA EL TOTAL ABSOLUTO DE REGISTROS CARGADOS */}
-                <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-semibold text-indigo-400 uppercase tracking-wider font-bold">Total Absoluto Registros</p>
-                    <h3 className="text-3xl font-extrabold text-white mt-1">{data.length.toLocaleString('es-CL')}</h3>
-                    <p className="text-xs text-slate-400 mt-1">Cargados en memoria global</p>
-                  </div>
-                  <div className="p-3 bg-indigo-600/20 text-indigo-400 rounded-lg">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* GRÁFICO 1: DISTRIBUCIÓN DE ALUMNOS POR CANTIDAD DE REPROBACIONES EN UNA MISMA MATERIA */}
-                <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg">
-                  <h3 className="font-bold text-white text-base mb-2">Distribución de Casos de Reprobación</h3>
-                  <p className="text-xs text-slate-400 mb-5">Cantidad de estudiantes según su número máximo de reprobaciones sucesivas en una misma materia.</p>
-                  
-                  {/* Gráfico de Barras interactivo generado dinámicamente con SVGs */}
-                  <div className="h-64 flex items-end justify-between px-2 pt-6 pb-2 border-b border-slate-700 relative">
-                    {/* Líneas de cuadrícula de fondo */}
-                    <div className="absolute inset-x-0 bottom-2 border-b border-slate-700/50 w-full"></div>
-                    <div className="absolute inset-x-0 bottom-1/4 border-b border-slate-700/50 w-full"></div>
-                    <div className="absolute inset-x-0 bottom-2/4 border-b border-slate-700/50 w-full"></div>
-                    <div className="absolute inset-x-0 bottom-3/4 border-b border-slate-700/50 w-full"></div>
-
-                    {(() => {
-                      // Agrupar alumnos únicos por su peor caso de reprobación
-                      const maxRepPorAlumno = {};
-                      dataFiltrada.forEach(r => {
-                        if (r.Condicion === 'REPROBADO') {
-                          const key = `${r.Rut}_${r.CodigoAsignatura}`;
-                          maxRepPorAlumno[key] = (maxRepPorAlumno[key] || 0) + 1;
-                        }
-                      });
-
-                      const maximosPorPersona = {};
-                      // Inicializar buckets
-                      [1, 2, 3, 4, 5].forEach(num => { maximosPorPersona[num] = new Set(); });
-
-                      Object.entries(maxRepPorAlumno).forEach(([key, reps]) => {
-                        const rut = key.split('_')[0];
-                        const bucket = Math.min(reps, 5);
-                        maximosPorPersona[bucket].add(rut);
-                      });
-
-                      const counts = [1, 2, 3, 4, 5].map(num => maximosPorPersona[num].size);
-                      const maxCount = Math.max(...counts, 1);
-
-                      return [1, 2, 3, 4, 5].map((num, i) => {
-                        const val = counts[i];
-                        const pct = (val / maxCount) * 100;
-                        const esCritico = num >= 3;
-                        return (
-                          <div key={num} className="flex-1 flex flex-col items-center group z-10">
-                            <span className="text-xs font-bold text-slate-300 mb-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">{val} Alum.</span>
-                            <div 
-                              className={`w-12 rounded-t-md transition-all duration-500 hover:scale-105 ${
-                                esCritico 
-                                  ? 'bg-rose-500 hover:bg-rose-400 shadow-md shadow-rose-950/50' 
-                                  : 'bg-indigo-500 hover:bg-indigo-400 shadow-md shadow-indigo-950/50'
-                              }`}
-                              style={{ height: `${Math.max((pct / 100) * 180, 8)}px` }}
-                            ></div>
-                            <span className="text-xs font-semibold text-slate-400 mt-2">
-                              {num === 5 ? '5+ veces' : `${num} ${num === 1 ? 'Vez' : 'veces'}`}
-                            </span>
+                <div className="space-y-6">
+                  {activeTab === 'alertas' && (
+                    <div className="space-y-6">
+                      <div className="bg-slate-800 p-5 rounded-xl border border-rose-500/20 shadow-lg">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-700">
+                          <div>
+                            <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                              <svg className="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                              </svg>
+                              Filtros de Alerta Temprana
+                            </h3>
+                            <p className="text-xs text-slate-400">Establece el nivel de reprobaciones sucesivas de tus estudiantes para desplegar el listado de control.</p>
                           </div>
-                        );
-                      });
-                    })()}
-                  </div>
-                </div>
+                          <button
+                            onClick={handleExportarAlertasCSV}
+                            disabled={alertasPermanencia.length === 0}
+                            className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-semibold py-2 px-4 rounded text-xs transition-colors flex items-center gap-2 self-start md:self-auto"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Exportar Alertas a CSV/Excel
+                          </button>
+                        </div>
 
-                {/* GRÁFICO 2: PROPORCIÓN GLOBAL DE APROBACIÓN */}
-                <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg flex flex-col justify-between">
-                  <div>
-                    <h3 className="font-bold text-white text-base mb-1">Efectividad Académica</h3>
-                    <p className="text-xs text-slate-400 mb-6">Relación entre total de registros aprobados y reprobados vigentes en el filtro.</p>
-                  </div>
-                  
-                  <div className="flex flex-col sm:flex-row items-center justify-around gap-6 mb-4">
-                    {/* Gráfico circular simple usando CSS y SVG */}
-                    <div className="relative w-40 h-40">
-                      <svg className="w-full h-full" viewBox="0 0 36 36">
-                        <circle cx="18" cy="18" r="16" fill="none" stroke="#334155" strokeWidth="4"></circle>
-                        {(() => {
-                          const total = estadisticasGenerales.totalAprobados + estadisticasGenerales.totalReprobados;
-                          const pct = total > 0 ? (estadisticasGenerales.totalAprobados / total) * 100 : 100;
-                          const dash = `${pct} ${100 - pct}`;
-                          return (
-                            <circle cx="18" cy="18" r="16" fill="none" stroke="#6366f1" strokeWidth="4"
-                                    strokeDasharray={dash} strokeDashoffset="25" strokeLinecap="round"></circle>
-                          );
-                        })()}
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-2xl font-black text-white">{estadisticasGenerales.tasaAprobacionGlobal}%</span>
-                        <span className="text-[10px] text-indigo-400 uppercase tracking-wider font-semibold">Aprobación</span>
-                      </div>
-                    </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div>
+                            <label className="block text-xs text-slate-400 mb-2 font-medium">
+                              Umbral de Reprobaciones Sucesivas: <span className="text-rose-400 font-bold text-sm">≥ {limiteReprobaciones} veces</span>
+                            </label>
+                            <input
+                              type="range"
+                              min="1"
+                              max="5"
+                              value={limiteReprobaciones}
+                              onChange={(e) => setLimiteReprobaciones(parseInt(e.target.value))}
+                              className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-rose-500"
+                            />
+                            <div className="flex justify-between text-[10px] text-slate-500 px-1 mt-1">
+                              <span>1 Reprobado</span>
+                              <span>2</span>
+                              <span>3 (Estándar)</span>
+                              <span>4</span>
+                              <span>5+ Crítico</span>
+                            </div>
+                          </div>
 
-                    <div className="space-y-3.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-3.5 h-3.5 rounded bg-indigo-500"></div>
-                        <div>
-                          <p className="text-xs text-slate-400">Total Aprobados</p>
-                          <p className="text-sm font-bold text-slate-200">{estadisticasGenerales.totalAprobados} asignaturas</p>
+                          <div>
+                            <label className="block text-xs text-slate-400 mb-1.5 font-medium">¿Logró aprobar la asignatura posteriormente?</label>
+                            <div className="flex bg-slate-900 rounded-md p-1 border border-slate-700">
+                              <button
+                                onClick={() => setFiltroEstadoAprobacion('Todos')}
+                                className={`flex-1 text-center py-1.5 rounded text-xs transition-colors ${filtroEstadoAprobacion === 'Todos' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                              >
+                                Todos
+                              </button>
+                              <button
+                                onClick={() => setFiltroEstadoAprobacion('No Aprobado')}
+                                className={`flex-1 text-center py-1.5 rounded text-xs transition-colors ${filtroEstadoAprobacion === 'No Aprobado' ? 'bg-rose-600 text-white font-medium' : 'text-slate-400 hover:text-slate-200'}`}
+                              >
+                                Aún Pendientes 🔴
+                              </button>
+                              <button
+                                onClick={() => setFiltroEstadoAprobacion('Aprobado')}
+                                className={`flex-1 text-center py-1.5 rounded text-xs transition-colors ${filtroEstadoAprobacion === 'Aprobado' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                              >
+                                Ya Superado 🟢
+                              </button>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs text-slate-400 mb-1.5 font-medium">Buscador Inteligente</label>
+                            <div className="relative">
+                              <input
+                                type="text"
+                                placeholder="Buscar por Nombre, Apellido o RUT..."
+                                value={busquedaAlumno}
+                                onChange={(e) => setBusquedaAlumno(e.target.value)}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-md py-2 pl-9 pr-3 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-rose-500"
+                              />
+                              <svg className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                              </svg>
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-3.5 h-3.5 rounded bg-rose-500"></div>
-                        <div>
-                          <p className="text-xs text-slate-400">Total Reprobados</p>
-                          <p className="text-sm font-bold text-slate-200">{estadisticasGenerales.totalReprobados} asignaturas</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-3.5 h-3.5 rounded bg-slate-600"></div>
-                        <div>
-                          <p className="text-xs text-slate-400">Total Registros</p>
-                          <p className="text-sm font-bold text-slate-200">{estadisticasGenerales.totalEvaluaciones} inscripciones</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
-          {/* PESTAÑA: ASIGNATURAS CRÍTICAS */}
-          {activeTab === 'asignaturas' && (
-            <div className="space-y-6">
-              <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg">
-                <h3 className="font-bold text-white text-base mb-1">Análisis de Asignaturas Críticas (Rendimiento Histórico)</h3>
-                <p className="text-xs text-slate-400 mb-5">Las asignaturas con mayor volumen absoluto de reprobaciones. Identifica rápidamente las materias que obstaculizan la progresión de las mallas.</p>
+                      <div className="bg-slate-800 rounded-xl border border-slate-700 shadow-xl overflow-hidden">
+                        <div className="px-5 py-4 bg-slate-800 border-b border-slate-700 flex justify-between items-center">
+                          <h3 className="font-bold text-white text-base">
+                            Estudiantes Identificados ({alertasPermanencia.length} casos críticos)
+                          </h3>
+                          <span className="text-xs bg-rose-500/10 text-rose-400 px-3 py-1 rounded-full border border-rose-500/20">
+                            Foco: Reprobaciones ≥ {limiteReprobaciones}
+                          </span>
+                        </div>
 
-                {asignaturasCriticas.length === 0 ? (
-                  <div className="p-12 text-center text-slate-500">No se registran asignaturas reprobadas con los filtros vigentes.</div>
-                ) : (
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Lista detallada de Asignaturas */}
-                    <div className="lg:col-span-2 bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                          <thead>
-                            <tr className="bg-slate-950 text-slate-400 text-xs font-semibold uppercase border-b border-slate-700">
-                              <th className="py-3 px-4">Código / Asignatura</th>
-                              <th className="py-3 px-4 text-center">Inscripciones</th>
-                              <th className="py-3 px-4 text-center">Reprobaciones</th>
-                              <th className="py-3 px-4 text-center">Alumnos Únicos</th>
-                              <th className="py-3 px-4 text-right">Tasa de Reprobación</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-800 text-sm">
-                            {asignaturasCriticas.slice(0, 8).map((asig, idx) => (
-                              <tr key={idx} className="hover:bg-slate-800/50">
-                                <td className="py-3.5 px-4">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs bg-slate-800 text-indigo-400 font-mono px-2 py-0.5 rounded">
-                                      {asig.Codigo}
+                        {alertasPermanencia.length === 0 ? (
+                          <div className="p-12 text-center">
+                            <svg className="w-16 h-16 text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p className="text-slate-300 font-semibold text-base">¡No se encontraron casos de alerta!</p>
+                            <p className="text-slate-500 text-sm mt-1">Intenta reducir el umbral de reprobaciones o cambiar los filtros de búsqueda.</p>
+                          </div>
+                        ) : (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                              <thead>
+                                <tr className="bg-slate-900 border-b border-slate-700 text-slate-400 text-xs uppercase tracking-wider">
+                                  <th className="py-3 px-5">RUT</th>
+                                  <th className="py-3 px-5">Estudiante</th>
+                                  <th className="py-3 px-5">Carrera / Plan</th>
+                                  <th className="py-3 px-5">Asignatura Crítica</th>
+                                  <th className="py-3 px-5 text-center">Nº Reprobados</th>
+                                  <th className="py-3 px-5">Estatus Actual</th>
+                                  <th className="py-3 px-5">Historial de Calificaciones</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-700 text-sm text-slate-300">
+                                {alertasPermanencia.map((alerta, index) => {
+                                  const ultimasNotas = alerta.HistorialNotas.map((n, i) => (
+                                    <span 
+                                      key={i} 
+                                      className={`inline-block px-1.5 py-0.5 text-xs rounded font-mono mr-1.5 ${
+                                        n.Condicion === 'REPROBADO' 
+                                          ? 'bg-rose-950 text-rose-300 border border-rose-800/50' 
+                                          : 'bg-emerald-950 text-emerald-300 border border-emerald-800/50'
+                                      }`}
+                                      title={`Semestre: ${n.Anio}-${n.Periodo} (${n.EstadoAsig})`}
+                                    >
+                                      {formatNota(n.Nota)}
                                     </span>
-                                    <span className="font-semibold text-slate-200">{asig.Nombre}</span>
-                                  </div>
-                                </td>
-                                <td className="py-3.5 px-4 text-center font-mono text-slate-300">{asig.InscripcionesTotales}</td>
-                                <td className="py-3.5 px-4 text-center font-bold text-rose-400 font-mono">{asig.Reprobaciones}</td>
-                                <td className="py-3.5 px-4 text-center text-slate-400">{asig.AlumnosUnicos}</td>
-                                <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-200">{asig.TasaReprobacion}%</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                                  ));
+
+                                  return (
+                                    <tr key={index} className="hover:bg-slate-700/50 transition-colors">
+                                      <td className="py-4 px-5 font-mono font-medium text-slate-100">
+                                        {alerta.Rut}-{alerta.Dv}
+                                      </td>
+                                      <td className="py-4 px-5">
+                                        <p className="font-semibold text-white">{alerta.ApPaterno} {alerta.ApMaterno}, {alerta.Nombres}</p>
+                                        <p className="text-xs text-slate-400">Nivel curricular sugerido: {alerta.Nivel || 'N/A'}</p>
+                                      </td>
+                                      <td className="py-4 px-5">
+                                        <p className="text-xs font-medium text-slate-200 max-w-[200px] truncate" title={alerta.NombreCarrera}>
+                                          {alerta.NombreCarrera.replace('-PUERTO MONTT', '')}
+                                        </p>
+                                        <p className="text-[11px] font-mono text-slate-400">Plan: {alerta.PlanEstudios}</p>
+                                      </td>
+                                      <td className="py-4 px-5">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-xs bg-slate-900 px-2 py-0.5 rounded text-slate-400 font-mono">
+                                            {alerta.CodigoAsignatura}
+                                          </span>
+                                          <span className="font-medium text-slate-200">{alerta.NombreAsignatura}</span>
+                                        </div>
+                                      </td>
+                                      <td className="py-4 px-5 text-center">
+                                        <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full font-bold text-sm ${
+                                          alerta.Reprobaciones >= 4 
+                                            ? 'bg-rose-600 text-white ring-4 ring-rose-950' 
+                                            : 'bg-amber-600 text-white ring-4 ring-amber-950'
+                                        }`}>
+                                          {alerta.Reprobaciones}
+                                        </span>
+                                      </td>
+                                      <td className="py-4 px-5">
+                                        {alerta.Aprobado ? (
+                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800/50">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                            Superada
+                                          </span>
+                                        ) : (
+                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-950 text-rose-400 border border-rose-800/50 animate-pulse">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                            Aún No Aprobada
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td className="py-4 px-5">
+                                        <div className="flex flex-wrap gap-1">
+                                          {ultimasNotas}
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
                       </div>
                     </div>
+                  )}
 
-                    {/* Gráfico rápido de dispersión o barra lateral */}
-                    <div className="bg-slate-900 p-5 rounded-lg border border-slate-700 flex flex-col justify-between">
-                      <div>
-                        <h4 className="font-bold text-sm text-white mb-2">Top 5 Asignaturas Críticas</h4>
-                        <p className="text-xs text-slate-500 mb-4">Ordenadas por volumen total de desaprobaciones cursadas.</p>
+                  {activeTab === 'general' && (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+                        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tasa Aprobación Global</p>
+                            <h3 className="text-3xl font-extrabold text-white mt-1">{estadisticasGenerales.tasaAprobacionGlobal}%</h3>
+                            <p className="text-xs text-slate-400 mt-1">Aprobados vs inscritos con nota</p>
+                          </div>
+                          <div className="p-3 bg-indigo-600/20 text-indigo-400 rounded-lg">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Alumnos en Alerta Crítica</p>
+                            <h3 className="text-3xl font-extrabold text-rose-400 mt-1">{estadisticasGenerales.alumnosEnRiesgoUnicos}</h3>
+                            <p className="text-xs text-rose-300/60 mt-1">Con ≥3 reprobados activos</p>
+                          </div>
+                          <div className="p-3 bg-rose-600/20 text-rose-400 rounded-lg">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Matrícula Analizada</p>
+                            <h3 className="text-3xl font-extrabold text-white mt-1">{estadisticasGenerales.alumnosUnicos}</h3>
+                            <p className="text-xs text-slate-400 mt-1">Estudiantes únicos en filtro</p>
+                          </div>
+                          <div className="p-3 bg-emerald-600/20 text-emerald-400 rounded-lg">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-semibold text-indigo-400 uppercase tracking-wider font-bold">Total Absoluto Registros</p>
+                            <h3 className="text-3xl font-extrabold text-white mt-1">{data.length.toLocaleString('es-CL')}</h3>
+                            <p className="text-xs text-slate-400 mt-1">Cargados en memoria global</p>
+                          </div>
+                          <div className="p-3 bg-indigo-600/20 text-indigo-400 rounded-lg">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="space-y-4">
-                        {asignaturasCriticas.slice(0, 5).map((asig, idx) => {
-                          const maxReps = asignaturasCriticas[0]?.Reprobaciones || 1;
-                          const pctBar = (asig.Reprobaciones / maxReps) * 100;
-                          return (
-                            <div key={idx} className="space-y-1">
-                              <div className="flex justify-between text-xs">
-                                <span className="font-semibold text-slate-300 truncate max-w-[200px]">{asig.Nombre}</span>
-                                <span className="font-mono text-rose-400 font-bold">{asig.Reprobaciones} reps</span>
-                              </div>
-                              <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                                <div className="bg-rose-500 h-2 rounded-full" style={{ width: `${pctBar}%` }}></div>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg">
+                          <h3 className="font-bold text-white text-base mb-2">Distribución de Casos de Reprobación</h3>
+                          <p className="text-xs text-slate-400 mb-5">Cantidad de estudiantes según su número máximo de reprobaciones sucesivas en una misma materia.</p>
+                          
+                          <div className="h-64 flex items-end justify-between px-2 pt-6 pb-2 border-b border-slate-700 relative">
+                            <div className="absolute inset-x-0 bottom-2 border-b border-slate-700/50 w-full"></div>
+                            <div className="absolute inset-x-0 bottom-1/4 border-b border-slate-700/50 w-full"></div>
+                            <div className="absolute inset-x-0 bottom-2/4 border-b border-slate-700/50 w-full"></div>
+                            <div className="absolute inset-x-0 bottom-3/4 border-b border-slate-700/50 w-full"></div>
+
+                            {(() => {
+                              const maxRepPorAlumno = {};
+                              dataFiltrada.forEach(r => {
+                                if (r.Condicion === 'REPROBADO') {
+                                  const key = `${r.Rut}_${r.CodigoAsignatura}`;
+                                  maxRepPorAlumno[key] = (maxRepPorAlumno[key] || 0) + 1;
+                                }
+                              });
+
+                              const maximosPorPersona = {};
+                              [1, 2, 3, 4, 5].forEach(num => { maximosPorPersona[num] = new Set(); });
+
+                              Object.entries(maxRepPorAlumno).forEach(([key, reps]) => {
+                                const rut = key.split('_')[0];
+                                const bucket = Math.min(reps, 5);
+                                maximosPorPersona[bucket].add(rut);
+                              });
+
+                              const counts = [1, 2, 3, 4, 5].map(num => maximosPorPersona[num].size);
+                              const maxCount = Math.max(...counts, 1);
+
+                              return [1, 2, 3, 4, 5].map((num, i) => {
+                                const val = counts[i];
+                                const pct = (val / maxCount) * 100;
+                                const esCritico = num >= 3;
+                                return (
+                                  <div key={num} className="flex-1 flex flex-col items-center group z-10">
+                                    <span className="text-xs font-bold text-slate-300 mb-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">{val} Alum.</span>
+                                    <div 
+                                      className={`w-12 rounded-t-md transition-all duration-500 hover:scale-105 ${
+                                        esCritico 
+                                          ? 'bg-rose-500 hover:bg-rose-400 shadow-md shadow-rose-950/50' 
+                                          : 'bg-indigo-500 hover:bg-indigo-400 shadow-md shadow-indigo-950/50'
+                                      }`}
+                                      style={{ height: `${Math.max((pct / 100) * 180, 8)}px` }}
+                                    ></div>
+                                    <span className="text-xs font-semibold text-slate-400 mt-2">
+                                      {num === 5 ? '5+ veces' : `${num} ${num === 1 ? 'Vez' : 'veces'}`}
+                                    </span>
+                                  </div>
+                                );
+                              });
+                            })()}
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg flex flex-col justify-between">
+                          <div>
+                            <h3 className="font-bold text-white text-base mb-1">Efectividad Académica</h3>
+                            <p className="text-xs text-slate-400 mb-6">Relación entre total de registros aprobados y reprobados vigentes en el filtro.</p>
+                          </div>
+                          
+                          <div className="flex flex-col sm:flex-row items-center justify-around gap-6 mb-4">
+                            <div className="relative w-40 h-40">
+                              <svg className="w-full h-full" viewBox="0 0 36 36">
+                                <circle cx="18" cy="18" r="16" fill="none" stroke="#334155" strokeWidth="4"></circle>
+                                {(() => {
+                                  const total = estadisticasGenerales.totalAprobados + estadisticasGenerales.totalReprobados;
+                                  const pct = total > 0 ? (estadisticasGenerales.totalAprobados / total) * 100 : 100;
+                                  const dash = `${pct} ${100 - pct}`;
+                                  return (
+                                    <circle cx="18" cy="18" r="16" fill="none" stroke="#6366f1" strokeWidth="4"
+                                            strokeDasharray={dash} strokeDashoffset="25" strokeLinecap="round"></circle>
+                                  );
+                                })()}
+                              </svg>
+                              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className="text-2xl font-black text-white">{estadisticasGenerales.tasaAprobacionGlobal}%</span>
+                                <span className="text-[10px] text-indigo-400 uppercase tracking-wider font-semibold">Aprobación</span>
                               </div>
                             </div>
-                          );
-                        })}
-                      </div>
 
-                      <div className="mt-4 pt-4 border-t border-slate-800 text-xs text-slate-400">
-                        * Consejo directivo: Evalúa tutorías especializadas antes del segundo examen parcial en las asignaturas indicadas en rojo.
+                            <div className="space-y-3.5">
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-3.5 h-3.5 rounded bg-indigo-500"></div>
+                                <div>
+                                  <p className="text-xs text-slate-400">Total Aprobados</p>
+                                  <p className="text-sm font-bold text-slate-200">{estadisticasGenerales.totalAprobados} asignaturas</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-3.5 h-3.5 rounded bg-rose-500"></div>
+                                <div>
+                                  <p className="text-xs text-slate-400">Total Reprobados</p>
+                                  <p className="text-sm font-bold text-slate-200">{estadisticasGenerales.totalReprobados} asignaturas</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2.5">
+                                <div className="w-3.5 h-3.5 rounded bg-slate-600"></div>
+                                <div>
+                                  <p className="text-xs text-slate-400">Total Registros</p>
+                                  <p className="text-sm font-bold text-slate-200">{estadisticasGenerales.totalEvaluaciones} inscripciones</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+                  )}
 
-          {/* PESTAÑA: AVANCE Y PROGRESO INDIVIDUAL */}
-          {activeTab === 'progreso' && (
-            <div className="space-y-6">
-              <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-5 pb-4 border-b border-slate-700">
-                  <div>
-                    <h3 className="font-bold text-white text-base">Avance Curricular por Alumno</h3>
-                    <p className="text-xs text-slate-400">Revisa la cantidad de asignaturas inscritas vs. asignaturas aprobadas con éxito de cada alumno en el sistema.</p>
-                  </div>
-                  
-                  <div className="w-full md:w-72">
-                    <input
-                      type="text"
-                      placeholder="Filtrar por RUT o Nombre..."
-                      value={busquedaAlumno}
-                      onChange={(e) => setBusquedaAlumno(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-md py-1.5 px-3 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    />
-                  </div>
-                </div>
+                  {activeTab === 'asignaturas' && (
+                    <div className="space-y-6">
+                      <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg">
+                        <h3 className="font-bold text-white text-base mb-1">Análisis de Asignaturas Críticas (Rendimiento Histórico)</h3>
+                        <p className="text-xs text-slate-400 mb-5">Las asignaturas con mayor volumen absoluto de reprobaciones. Identifica rápidamente las materias que obstaculizan la progresión de las mallas.</p>
 
-                {avanceEstudiantes.length === 0 ? (
-                  <div className="p-8 text-center text-slate-500">No hay información disponible.</div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="bg-slate-900 border-b border-slate-700 text-slate-400 text-xs font-semibold uppercase">
-                          <th className="py-3 px-4">RUT</th>
-                          <th className="py-3 px-4">Estudiante</th>
-                          <th className="py-3 px-4">Plan / Carrera</th>
-                          <th className="py-3 px-4 text-center">Asig. Inscritas</th>
-                          <th className="py-3 px-4 text-center">Asig. Aprobadas</th>
-                          <th className="py-3 px-4 text-right">Tasa de Progreso</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-700 text-sm text-slate-300">
-                        {avanceEstudiantes
-                          .filter(al => {
-                            if (busquedaAlumno.trim() !== '') {
-                              const q = busquedaAlumno.toLowerCase();
-                              return al.Nombre.toLowerCase().includes(q) || al.Rut.toLowerCase().includes(q);
-                            }
-                            return true;
-                          })
-                          .slice(0, 15)
-                          .map((alumno, idx) => {
-                            const pctNum = parseFloat(alumno.PorcentajeAvance);
-                            let colorAvance = 'bg-rose-500';
-                            if (pctNum >= 75) colorAvance = 'bg-emerald-500';
-                            else if (pctNum >= 40) colorAvance = 'bg-amber-500';
+                        {asignaturasCriticas.length === 0 ? (
+                          <div className="p-12 text-center text-slate-500">No se registran asignaturas reprobadas con los filtros vigentes.</div>
+                        ) : (
+                          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div className="lg:col-span-2 bg-slate-900 rounded-lg overflow-hidden border border-slate-700">
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                  <thead>
+                                    <tr className="bg-slate-950 text-slate-400 text-xs font-semibold uppercase border-b border-slate-700">
+                                      <th className="py-3 px-4">Código / Asignatura</th>
+                                      <th className="py-3 px-4 text-center">Inscripciones</th>
+                                      <th className="py-3 px-4 text-center">Reprobaciones</th>
+                                      <th className="py-3 px-4 text-center">Alumnos Únicos</th>
+                                      <th className="py-3 px-4 text-right">Tasa de Reprobación</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-slate-800 text-sm">
+                                    {asignaturasCriticas.slice(0, 8).map((asig, idx) => (
+                                      <tr key={idx} className="hover:bg-slate-800/50">
+                                        <td className="py-3.5 px-4">
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-xs bg-slate-800 text-indigo-400 font-mono px-2 py-0.5 rounded">
+                                              {asig.Codigo}
+                                            </span>
+                                            <span className="font-semibold text-slate-200">{asig.Nombre}</span>
+                                          </div>
+                                        </td>
+                                        <td className="py-3.5 px-4 text-center font-mono text-slate-300">{asig.InscripcionesTotales}</td>
+                                        <td className="py-3.5 px-4 text-center font-bold text-rose-400 font-mono">{asig.Reprobaciones}</td>
+                                        <td className="py-3.5 px-4 text-center text-slate-400">{asig.AlumnosUnicos}</td>
+                                        <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-200">{asig.TasaReprobacion}%</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
 
-                            return (
-                              <tr key={idx} className="hover:bg-slate-700/30">
-                                <td className="py-3.5 px-4 font-mono font-medium">{alumno.Rut}-{alumno.Dv}</td>
-                                <td className="py-3.5 px-4">
-                                  <span className="font-semibold text-white">{alumno.Nombre}</span>
-                                </td>
-                                <td className="py-3.5 px-4 text-xs">
-                                  <p className="text-slate-300 truncate max-w-[200px]">{alumno.Carrera.replace('-PUERTO MONTT', '')}</p>
-                                  <p className="text-slate-500">Plan: {alumno.Plan}</p>
-                                </td>
-                                <td className="py-3.5 px-4 text-center font-mono">{alumno.TotalCursadas}</td>
-                                <td className="py-3.5 px-4 text-center font-mono text-emerald-400 font-bold">{alumno.Aprobadas}</td>
-                                <td className="py-3.5 px-4 text-right">
-                                  <div className="flex items-center justify-end gap-2">
-                                    <span className="font-mono font-bold text-slate-200">{alumno.PorcentajeAvance}%</span>
-                                    <div className="w-16 bg-slate-900 h-2 rounded-full overflow-hidden">
-                                      <div className={`${colorAvance} h-2 rounded-full`} style={{ width: `${pctNum}%` }}></div>
+                            <div className="bg-slate-900 p-5 rounded-lg border border-slate-700 flex flex-col justify-between">
+                              <div>
+                                <h4 className="font-bold text-sm text-white mb-2">Top 5 Asignaturas Críticas</h4>
+                                <p className="text-xs text-slate-500 mb-4">Ordenadas por volumen total de desaprobaciones cursadas.</p>
+                              </div>
+
+                              <div className="space-y-4">
+                                {asignaturasCriticas.slice(0, 5).map((asig, idx) => {
+                                  const maxReps = asignaturasCriticas[0]?.Reprobaciones || 1;
+                                  const pctBar = (asig.Reprobaciones / maxReps) * 100;
+                                  return (
+                                    <div key={idx} className="space-y-1">
+                                      <div className="flex justify-between text-xs">
+                                        <span className="font-semibold text-slate-300 truncate max-w-[200px]">{asig.Nombre}</span>
+                                        <span className="font-mono text-rose-400 font-bold">{asig.Reprobaciones} reps</span>
+                                      </div>
+                                      <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                                        <div className="bg-rose-500 h-2 rounded-full" style={{ width: `${pctBar}%` }}></div>
+                                      </div>
                                     </div>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                <div className="mt-4 text-xs text-slate-500 text-right">
-                  Mostrando los primeros 15 registros filtrados. Usa el cuadro de búsqueda para ver casos específicos.
+                                  );
+                                })}
+                              </div>
+
+                              <div className="mt-4 pt-4 border-t border-slate-800 text-xs text-slate-400">
+                                * Consejo directivo: Evalúa tutorías especializadas antes del segundo examen parcial en las asignaturas indicadas en rojo.
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'progreso' && (
+                    <div className="space-y-6">
+                      <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-lg">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-5 pb-4 border-b border-slate-700">
+                          <div>
+                            <h3 className="font-bold text-white text-base">Avance Curricular por Alumno</h3>
+                            <p className="text-xs text-slate-400">Revisa la cantidad de asignaturas inscritas vs. asignaturas aprobadas con éxito de cada alumno en el sistema.</p>
+                          </div>
+                          
+                          <div className="w-full md:w-72">
+                            <input
+                              type="text"
+                              placeholder="Filtrar por RUT o Nombre..."
+                              value={busquedaAlumno}
+                              onChange={(e) => setBusquedaAlumno(e.target.value)}
+                              className="w-full bg-slate-900 border border-slate-700 rounded-md py-1.5 px-3 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            />
+                          </div>
+                        </div>
+
+                        {avanceEstudiantes.length === 0 ? (
+                          <div className="p-8 text-center text-slate-500">No hay información disponible.</div>
+                        ) : (
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                              <thead>
+                                <tr className="bg-slate-900 border-b border-slate-700 text-slate-400 text-xs font-semibold uppercase">
+                                  <th className="py-3 px-4">RUT</th>
+                                  <th className="py-3 px-4">Estudiante</th>
+                                  <th className="py-3 px-4">Plan / Carrera</th>
+                                  <th className="py-3 px-4 text-center">Asig. Inscritas</th>
+                                  <th className="py-3 px-4 text-center">Asig. Aprobadas</th>
+                                  <th className="py-3 px-4 text-right">Tasa de Progreso</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-700 text-sm text-slate-300">
+                                {avanceEstudiantes
+                                  .filter(al => {
+                                    if (busquedaAlumno.trim() !== '') {
+                                      const q = busquedaAlumno.toLowerCase();
+                                      return al.Nombre.toLowerCase().includes(q) || al.Rut.toLowerCase().includes(q);
+                                    }
+                                    return true;
+                                  })
+                                  .slice(0, 15)
+                                  .map((alumno, idx) => {
+                                    const pctNum = parseFloat(alumno.PorcentajeAvance);
+                                    let colorAvance = 'bg-rose-500';
+                                    if (pctNum >= 75) colorAvance = 'bg-emerald-500';
+                                    else if (pctNum >= 40) colorAvance = 'bg-amber-500';
+
+                                    return (
+                                      <tr key={idx} className="hover:bg-slate-700/30">
+                                        <td className="py-3.5 px-4 font-mono font-medium">{alumno.Rut}-{alumno.Dv}</td>
+                                        <td className="py-3.5 px-4">
+                                          <span className="font-semibold text-white">{alumno.Nombre}</span>
+                                        </td>
+                                        <td className="py-3.5 px-4 text-xs">
+                                          <p className="text-slate-300 truncate max-w-[200px]">{alumno.Carrera.replace('-PUERTO MONTT', '')}</p>
+                                          <p className="text-slate-500">Plan: {alumno.Plan}</p>
+                                        </td>
+                                        <td className="py-3.5 px-4 text-center font-mono">{alumno.TotalCursadas}</td>
+                                        <td className="py-3.5 px-4 text-center font-mono text-emerald-400 font-bold">{alumno.Aprobadas}</td>
+                                        <td className="py-3.5 px-4 text-right">
+                                          <div className="flex items-center justify-end gap-2">
+                                            <span className="font-mono font-bold text-slate-200">{alumno.PorcentajeAvance}%</span>
+                                            <div className="w-16 bg-slate-900 h-2 rounded-full overflow-hidden">
+                                              <div className={`${colorAvance} h-2 rounded-full`} style={{ width: `${pctNum}%` }}></div>
+                                            </div>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                        <div className="mt-4 text-xs text-slate-500 text-right">
+                          Mostrando los primeros 15 registros filtrados. Usa el cuadro de búsqueda para ver casos específicos.
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'carga' && (
+                    <div className="space-y-6 animate-fadeIn">
+                      <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl">
+                        <h3 className="font-bold text-white text-base mb-2">Motor de Procesamiento Local de Reportes (CSV)</h3>
+                        <p className="text-sm text-slate-400 mb-6">
+                          Este módulo te permite cargar directamente los archivos originales de Excel guardados como <code className="text-slate-200 font-mono bg-slate-950 px-1 py-0.5 rounded">.csv</code>. 
+                          El procesamiento de datos se ejecuta 100% de manera interna dentro de tu propio explorador, garantizando máxima velocidad y total privacidad institucional.
+                        </p>
+
+                        <div className="border-2 border-dashed border-slate-600 hover:border-indigo-500 bg-slate-900 rounded-xl p-8 text-center transition-colors cursor-pointer relative">
+                          <input
+                            type="file"
+                            multiple
+                            accept=".csv"
+                            onChange={handleFileUpload}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          />
+                          <div className="space-y-3 pointer-events-none">
+                            <svg className="w-12 h-12 text-slate-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <p className="text-base text-slate-200 font-semibold">Selecciona o arrastra tus archivos .csv aquí</p>
+                            <p className="text-xs text-slate-500">Puedes subir múltiples archivos de carreras simultáneamente (REPORTE_3218, REPORTE_3216, etc.)</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-8 bg-slate-900/60 p-5 rounded-lg border border-slate-800">
+                          <h4 className="font-bold text-sm text-slate-200 mb-2">Guía paso a paso para exportar desde Excel:</h4>
+                          <ol className="list-decimal pl-5 text-xs text-slate-400 space-y-2">
+                            <li>Abre tu planilla original de Excel (<code className="text-indigo-400 font-mono">REPORTE_3218.xlsx</code>, etc.).</li>
+                            <li>Haz clic en <strong>Archivo</strong> &gt; <strong>Guardar como</strong>.</li>
+                            <li>En la lista desplegable de Tipo de archivo, selecciona <strong>CSV (delimitado por comas) (*.csv)</strong>.</li>
+                            <li>Guarda el archivo y arrástralo en la zona de carga de arriba. ¡El dashboard interpretará automáticamente las columnas y actualizará los KPIs de manera instantánea!</li>
+                          </ol>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
-              </div>
+              </main>
+
+              <footer className="bg-slate-950 border-t border-slate-800 text-slate-500 py-6 mt-12 text-center text-xs">
+                <p>© 2026 SAPE - Sistema de Alertas y Permanencia de Estudiantes para Carreras de Ingeniería.</p>
+                <p className="mt-1">Diseñado bajo principios de usabilidad y protección de datos académicos locales.</p>
+              </footer>
             </div>
-          )}
+          );
+        }
 
-          {/* PESTAÑA: MOTOR DE CARGA DE ARCHIVOS */}
-          {activeTab === 'carga' && (
-            <div className="space-y-6 animate-fadeIn">
-              <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-xl">
-                <h3 className="font-bold text-white text-base mb-2">Motor de Procesamiento Local de Reportes (CSV)</h3>
-                <p className="text-sm text-slate-400 mb-6">
-                  Este módulo te permite cargar directamente los archivos originales de Excel guardados como <code className="text-slate-200 font-mono bg-slate-950 px-1 py-0.5 rounded">.csv</code>. 
-                  El procesamiento de datos se ejecuta 100% de manera interna dentro de tu propio explorador, garantizando máxima velocidad y total privacidad institucional.
-                </p>
-
-                {/* ZONA DE DROPZONE */}
-                <div className="border-2 border-dashed border-slate-600 hover:border-indigo-500 bg-slate-900 rounded-xl p-8 text-center transition-colors cursor-pointer relative">
-                  <input
-                    type="file"
-                    multiple
-                    accept=".csv"
-                    onChange={handleFileUpload}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                  <div className="space-y-3 pointer-events-none">
-                    <svg className="w-12 h-12 text-slate-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <p className="text-base text-slate-200 font-semibold">Selecciona o arrastra tus archivos .csv aquí</p>
-                    <p className="text-xs text-slate-500">Puedes subir múltiples archivos de carreras simultáneamente (REPORTE_3218, REPORTE_3216, etc.)</p>
-                  </div>
-                </div>
-
-                {/* INSTRUCCIONES ADICIONALES */}
-                <div className="mt-8 bg-slate-900/60 p-5 rounded-lg border border-slate-800">
-                  <h4 className="font-bold text-sm text-slate-200 mb-2">Guía paso a paso para exportar desde Excel:</h4>
-                  <ol className="list-decimal pl-5 text-xs text-slate-400 space-y-2">
-                    <li>Abre tu planilla original de Excel (<code className="text-indigo-400 font-mono">REPORTE_3218.xlsx</code>, etc.).</li>
-                    <li>Haz clic en <strong>Archivo</strong> &gt; <strong>Guardar como</strong>.</li>
-                    <li>En la lista desplegable de Tipo de archivo, selecciona <strong>CSV (delimitado por comas) (*.csv)</strong>.</li>
-                    <li>Guarda el archivo y arrástralo en la zona de carga de arriba. ¡El dashboard interpretará automáticamente las columnas y actualizará los KPIs de manera instantánea!</li>
-                  </ol>
-                </div>
-              </div>
-            </div>
-          )}
-
-        </div>
-      </main>
-
-      {/* FOOTER */}
-      <footer className="bg-slate-950 border-t border-slate-800 text-slate-500 py-6 mt-12 text-center text-xs">
-        <p>© 2026 SAPE - Sistema de Alertas y Permanencia de Estudiantes para Carreras de Ingeniería.</p>
-        <p className="mt-1">Diseñado bajo principios de usabilidad y protección de datos académicos locales.</p>
-      </footer>
-    </div>
-  );
-}
+        // 6. Finalmente, le decimos a ReactDOM que monte nuestra App en el div "root"
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
