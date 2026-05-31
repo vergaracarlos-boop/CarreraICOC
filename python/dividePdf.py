@@ -1,4 +1,5 @@
 import fitz  # PyMuPDF
+import os
 
 def split_pdf_by_custom_ranges(input_pdf_path, output_prefix, page_ranges):
     try:
@@ -9,6 +10,9 @@ def split_pdf_by_custom_ranges(input_pdf_path, output_prefix, page_ranges):
 
     total_pages = pdf_document.page_count
 
+    output_dir = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docPDF'))
+    os.makedirs(output_dir, exist_ok=True)
+
     for i, (start, end) in enumerate(page_ranges):
         if start < 1 or end > total_pages or start > end:
             print(f"Rango inválido: ({start}, {end})")
@@ -16,18 +20,22 @@ def split_pdf_by_custom_ranges(input_pdf_path, output_prefix, page_ranges):
         output_pdf = fitz.open()
         for page_num in range(start - 1, end):  # Índices base 0
             output_pdf.insert_pdf(pdf_document, from_page=page_num, to_page=page_num)
-        output_filename = f"{output_prefix}_part_{i+1}.pdf"
+        output_filename = os.path.join(output_dir, f"{output_prefix}_part_{i+1}.pdf")
         output_pdf.save(output_filename)
         output_pdf.close()
         print(f"Guardado: {output_filename}")
 
     pdf_document.close()
 
-# Ejemplo de uso
-input_pdf = "C:/Users/chopp/OneDrive/Biblioteca Digital Vergara Ingenieria7Libros Investigación/Metodologia_de_la_Investigacion_-_Hernan.pdf"
-output_prefix = "Metodología_Investigacion_HS_"
-page_ranges = [(35,54),(55,65),(67,90),(91,120),(121,134),(135,158),(159,202),(203,228),(229,302),(303,368),(369,387),(389,414),(416,426),(427,500),(501,540),(541,563),(565,621)]
 
+# Ejemplo de uso
+input_pdf = "/home/carlosv/Descargas/dinamica-de-estructuras-anil-k-chopra-espanol-4-ed-150514173154-lva1-app6891.pdf"
+output_prefix = "Dinamica_Estructura_Chopra_"
+page_ranges = [(30,38),(39,74),(75,100),(101,160),(161,200),(201,232),(233,292),(293,342),(343,382),(383,438),(439,482),(483,502),(503,548),(549,652),(653,692),(693,742)]
+
+#Verificar si existe archivo o directorio
+if not os.path.exists(input_pdf):
+    print("No existe:", input_pdf)
 
 
 
