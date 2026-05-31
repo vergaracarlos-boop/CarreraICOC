@@ -29,9 +29,9 @@ def split_pdf_by_custom_ranges(input_pdf_path, output_prefix, page_ranges):
 
 
 # Ejemplo de uso
-input_pdf = "/home/carlosv/Descargas/dinamica-de-estructuras-anil-k-chopra-espanol-4-ed-150514173154-lva1-app6891.pdf"
-output_prefix = "Dinamica_Estructura_Chopra_"
-page_ranges = [(30,38),(39,74),(75,100),(101,160),(161,200),(201,232),(233,292),(293,342),(343,382),(383,438),(439,482),(483,502),(503,548),(549,652),(653,692),(693,742)]
+input_pdf = "/home/carlosv/Descargas/dinamica estructural matlab.pdf"
+output_prefix = "Dinamica_Estructura_Matlab_"
+page_ranges = [(28, 51), (52, 68), (69, 96), (97, 128), (129, 148), (149, 166), (167, 189), (190, 208), (209, 220), (221, 247), (248, 266), (267, 292)]
 
 #Verificar si existe archivo o directorio
 if not os.path.exists(input_pdf):
