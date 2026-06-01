@@ -48,13 +48,13 @@ def rangos_capitulos(capitulos, total_paginas):
 
 
 if __name__ == '__main__':
-    ruta_del_pdf = '/home/carlosv/Descargas/dinamica estructural matlab.pdf'
+    ruta_del_pdf = '/home/carlosv/Descargas/Uso de aisladores y disipadores en estructuras.pdf'
     print(f'Analizando el archivo: {ruta_del_pdf}')
     capitulos = extraer_capitulos(ruta_del_pdf)
 
     if not capitulos:
         print('No se detectaron capítulos principales.')
-    else:
+    else:n
         print('\n--- Capítulos detectados ---')
         for pagina, titulo in sorted(capitulos.items()):
             nombre = NUMERO_CAP.match(titulo.strip())
