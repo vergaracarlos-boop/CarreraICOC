@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Revisión de Proyectos de Título - ULaG</title>
+    <!-- Tailwind CSS para el diseño -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configuración y carga de MathJax para renderizar LaTeX en el navegador -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .step-active {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen tex2jax_process">
+
+    <!-- Header Principal -->
+    <header class="bg-slate-900 text-white shadow-md border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-blue-600 rounded-lg text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Manual de Revisión de Proyectos de Título</h1>
+                    <p class="text-xs text-slate-400">Ingeniería Civil en Obras Civiles · Universidad de los Lagos</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="switchTab('fases')" id="tab-btn-fases" class="px-4 py-2 text-sm font-medium rounded-md bg-blue-600 text-white transition-colors duration-200 shadow">
+                    Fases de Revisión
+                </button>
+                <button onclick="switchTab('hitos')" id="tab-btn-hitos" class="px-4 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white hover:bg-slate-800 transition-colors duration-200">
+                    Matriz de Hitos
+                </button>
+                <button onclick="switchTab('generador')" id="tab-btn-generador" class="px-4 py-2 text-sm font-medium rounded-md text-slate-300 hover:text-white hover:bg-slate-800 transition-colors duration-200">
+                    Generador de Feedback
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+
+        <!-- ================= SECCIÓN 1: FASES DE REVISIÓN ================= -->
+        <section id="section-fases" class="space-y-8">
+            <div class="text-center max-w-2xl mx-auto mb-6">
+                <span class="px-3 py-1 text-xs font-semibold text-blue-800 bg-blue-100 rounded-full uppercase tracking-wider">Metodología de Revisión</span>
+                <h2 class="text-3xl font-extrabold text-slate-900 mt-2">La Estrategia de Revisión por Capas</h2>
+                <p class="text-slate-600 mt-2">No intentes leer y corregir todo a la vez. Sigue un flujo lógico que ahorre tu tiempo de revisión y discipline la redacción técnica del estudiante.</p>
+            </div>
+
+            <!-- Flujo Visual de las 4 Fases -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <!-- Fase 1 Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-2 h-full bg-amber-500"></div>
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full uppercase">Fase 1</span>
+                            <span class="text-xs text-slate-400 font-medium">5-10 min</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-1">Anatomía y Forma</h3>
+                        <p class="text-xs text-slate-500 mb-4"><strong>Lectura:</strong> Escaneo visual general (sin leer contenido continuo).</p>
+                        <p class="text-sm text-slate-600">Verificar que la estructura cumpla el reglamento, índices indexados y citados, y presencia de todos los capítulos clave del avance.</p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100">
+                        <span class="text-xs font-bold text-red-600 flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M13.477 14.89A6 6 0 012 11.5a6 6 0 0110.87-3.414l4 4a1 1 0 01-1.414 1.414l-4-4zM10 16a6 6 0 100-12 6 6 0 000 12z" clip-rule="evenodd"></path></svg>
+                            Criterio de Parada Activo
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Fase 2 Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-2 h-full bg-blue-500"></div>
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full uppercase">Fase 2</span>
+                            <span class="text-xs text-slate-400 font-medium">20 min</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-1">Arquitectura Global</h3>
+                        <p class="text-xs text-slate-500 mb-4"><strong>Lectura:</strong> Rápida (Skimming), de corrido a velocidad media-alta.</p>
+                        <p class="text-sm text-slate-600">Evaluar el hilo conductor científico: Conexión entre Problema $\rightarrow$ Objetivos $\rightarrow$ Metodología $\rightarrow$ Resultados.</p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100">
+                        <span class="text-xs font-medium text-slate-500">Evalúa consistencia científica</span>
+                    </div>
+                </div>
+
+                <!-- Fase 3 Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-2 h-full bg-teal-500"></div>
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-full uppercase">Fase 3</span>
+                            <span class="text-xs text-slate-400 font-medium">25-30 min</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-1">Lógica y Estilo</h3>
+                        <p class="text-xs text-slate-500 mb-4"><strong>Lectura:</strong> Crítica, pausada, deteniéndose en párrafos clave.</p>
+                        <p class="text-sm text-slate-600">Revisar si se entienden claramente las ideas. Evaluar el rigor técnico de la ingeniería, terminología técnica y uso de tiempos verbales.</p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100">
+                        <span class="text-xs font-medium text-slate-500">Exclusiva para capítulos nuevos</span>
+                    </div>
+                </div>
+
+                <!-- Fase 4 Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-2 h-full bg-violet-500"></div>
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-bold text-violet-700 bg-violet-50 px-2.5 py-1 rounded-full uppercase">Fase 4</span>
+                            <span class="text-xs text-slate-400 font-medium">Varía</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-1">Mecánica del Texto</h3>
+                        <p class="text-xs text-slate-500 mb-4"><strong>Lectura:</strong> De lupa (arqueológica). Búsqueda de errores superficiales.</p>
+                        <p class="text-sm text-slate-600"><strong>Hitos 1 y 2:</strong> Control superficial de vicios recurrentes. <br><strong>Hito 3:</strong> Revisión de lupa profunda (puntuación criminal, citas exactas).</p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100">
+                        <span class="text-xs font-medium text-slate-500">Gradual según avance</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bloques detallados con Guías de acción -->
+            <div class="space-y-6 mt-10">
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2 mb-4">
+                        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-amber-800 text-sm font-bold">1</span>
+                        Protocolo de la Fase 1: Filtro de Entrada
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-slate-600">
+                        <div>
+                            <p class="font-semibold text-slate-800 mb-2">Checklist Rápido:</p>
+                            <ul class="list-disc pl-5 space-y-1.5">
+                                <li>Índices (general, tablas, figuras) generados y actualizados.</li>
+                                <li>Presencia del capítulo de Metodología (crítico desde el Hito 1).</li>
+                                <li>Tablas y gráficos correctamente rotulados (ej. <em>Tabla 3.1: Coeficientes...</em>).</li>
+                                <li>Referencias bibliográficas ordenadas formalmente al final.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-red-50 p-4 rounded-lg border border-red-200 text-red-950">
+                            <span class="font-bold flex items-center gap-1 text-red-800 mb-1">
+                                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                🛑 Umbral de Detención de Revisión:
+                            </span>
+                            <p class="text-xs">Si al escanear visualmente el documento notas que faltan apartados nucleares obligatorios para el hito o los índices no coinciden en absoluto, <strong>no sigas leyendo</strong>. Devuelve el avance puntuando al mínimo el área formal de tu rúbrica. Esto protege tus horas de docencia de textos no preparados.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2 mb-4">
+                        <span class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-800 text-sm font-bold">2</span>
+                        Protocolo de la Fase 2: Control de la Coherencia Científica
+                    </h3>
+                    <p class="text-sm text-slate-600 mb-4">La coherencia es el pilar de un proyecto de título en ingeniería. Usa la lectura de "skimming" (vuelo de pájaro) sin detenerte a editar palabras, solo sigue el hilo:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 text-center">
+                            <span class="text-xs font-bold text-slate-500 uppercase">Paso A</span>
+                            <p class="font-semibold text-slate-800 mt-1">Problema y Pregunta</p>
+                            <p class="text-xs text-slate-500 mt-1">¿Está claro el alcance del estudio?</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 text-center">
+                            <span class="text-xs font-bold text-slate-500 uppercase">Paso B</span>
+                            <p class="font-semibold text-slate-800 mt-1">Objetivos</p>
+                            <p class="text-xs text-slate-500 mt-1">¿Apuntan directamente a solucionar el problema?</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 text-center">
+                            <span class="text-xs font-bold text-slate-500 uppercase">Paso C</span>
+                            <p class="font-semibold text-slate-800 mt-1">Metodología</p>
+                            <p class="text-xs text-slate-500 mt-1">¿Los pasos propuestos permiten alcanzar los objetivos?</p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 text-center">
+                            <span class="text-xs font-bold text-slate-500 uppercase">Paso D</span>
+                            <p class="font-semibold text-slate-800 mt-1">Resultados y Conclusiones</p>
+                            <p class="text-xs text-slate-500 mt-1">¿Resuelven y responden directamente cada objetivo?</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2 mb-3">
+                            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-teal-100 text-teal-800 text-sm font-bold">3</span>
+                            Fase 3: Estilo y Redacción Técnica
+                        </h3>
+                        <p class="text-sm text-slate-600 mb-3">Busca la claridad del argumento ingenieril. Si un párrafo te obliga a releerlo tres veces para entender la idea, está mal redactado.</p>
+                        <ul class="text-sm text-slate-600 space-y-2">
+                            <li><strong>Voz impersonal:</strong> Vigilar que se redacte en tercera persona (<em>"se calculó"</em>, <em>"se analizó"</em> en vez de <em>"nosotros calculamos"</em> o <em>"calculé"</em>).</li>
+                            <li><strong>Rigurosidad:</strong> Excluir adjetivos ambiguos o informales (<em>"un poco grande"</em>, <em>"bastante bueno"</em>). Usar datos o términos técnicos exactos.</li>
+                            <li><strong>Tiempos verbales:</strong> Metodología en pasado, marco teórico e hipótesis en presente, conclusiones en pasado.</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2 mb-3">
+                            <span class="flex h-6 w-6 items-center justify-center rounded-full bg-violet-100 text-violet-800 text-sm font-bold">4</span>
+                            Fase 4: Ortografía y Formato
+                        </h3>
+                        <p class="text-sm text-slate-600 mb-3">El nivel de profundidad varía radicalmente entre entregas parciales y finales para maximizar el uso de tu tiempo.</p>
+                        <div class="space-y-3">
+                            <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                                <span class="text-xs font-bold text-indigo-900 block">En Hitos Parciales (1 y 2) - Enfoque Pedagógico:</span>
+                                <p class="text-xs text-slate-700 mt-0.5">Identifica vicios ortográficos recurrentes (por ejemplo, omitir tildes en el pasado de verbos de acción). Señala los primeros tres con un comentario aclaratorio y encarga la autorrevisión al estudiante para todo el resto del texto.</p>
+                            </div>
+                            <div class="bg-violet-50 p-3 rounded-lg border border-violet-100">
+                                <span class="text-xs font-bold text-violet-900 block">En Hito Final (3) - Enfoque Arqueológico / De Lupa:</span>
+                                <p class="text-xs text-slate-700 mt-0.5">Control de errores al detalle en todo el volumen del documento: "coma asesina" (comas intermedias entre sujeto y predicado), concordancia de género/número, y validación estricta de la bibliografía.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SECCIÓN 2: MATRIZ DE HITOS ================= -->
+        <section id="section-hitos" class="hidden space-y-8">
+            <div class="text-center max-w-2xl mx-auto mb-6">
+                <span class="px-3 py-1 text-xs font-semibold text-indigo-800 bg-indigo-100 rounded-full uppercase tracking-wider">Planificación Semestral</span>
+                <h2 class="text-3xl font-extrabold text-slate-900 mt-2">Distribución de Carga por Hito</h2>
+                <p class="text-slate-600 mt-2">Como los proyectos avanzan de forma incremental, no evalúes contenidos futuros en hitos tempranos. Distribuye tus capas de corrección inteligentemente.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- HITO 1 CARD -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold text-slate-900">Hito 1</h3>
+                            <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">33% Avance</span>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-700 mb-2">Secciones Esperadas:</p>
+                        <p class="text-xs text-indigo-600 font-medium mb-4">Introducción · Formulación del Problema · Objetivos · Marco Teórico · Metodología de Trabajo.</p>
+                        
+                        <div class="space-y-3 pt-4 border-t border-slate-100">
+                            <div class="flex items-start gap-2 text-xs text-slate-600">
+                                <span class="p-1 bg-amber-100 text-amber-800 rounded font-bold">F1</span>
+                                <div><strong>Anatomía:</strong> Control estructural estricto de los capítulos básicos obligatorios y sus índices tentativos.</div>
+                            </div>
+                            <div class="flex items-start gap-2 text-xs text-slate-600">
+                                <span class="p-1 bg-blue-100 text-blue-800 rounded font-bold">F2</span>
+                                <div><strong>Coherencia:</strong> Verificar que la metodología resuelva realmente los objetivos planteados.</div>
+                            </div>
+                            <div class="flex items-start gap-2 text-xs text-slate-600">
+                                <span class="p-1 bg-teal-100 text-teal-800 rounded font-bold">F3</span>
+                                <div><strong>Lógica:</strong> Redacción clara del planteamiento técnico de la investigación.</div>
+                            </div>
+                            <div class="flex items-start gap-2 text-xs text-slate-600">
+                                <span class="p-1 bg-slate-100 text-slate-700 rounded font-bold">F4</span>
+                                <div><strong>Ortografía:</strong> Control de vicios recurrentes de escritura iniciales.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HITO 2 CARD -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold text-slate-900">Hito 2</h3>
+                            <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">66% Avance</span>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-700 mb-2">Secciones Esperadas:</p>
+                        <p class="text-xs text-indigo-600 font-medium mb-4">Sección del Hito 1 (Corregida) · Desarrollo del Proyecto / Ingeniería · Recopilación de Datos · Análisis y Resultados.</p>
+                        
+                        <div class="space-y-3 pt-4 border-t border-slate-100">
+                            <div class="flex items-start gap-2 text-xs text-slate-600">
+                                <span class="p-1 bg-amber-100 text-amber-800 rounded font-bold">F1</span>
+                                <div><strong>Anatomía:</strong> Incorporación y citación formal de tablas de datos, resultados y ecuaciones ingenieriles.</div>
+                            </div>
+                            <div class="flex items-start gap-2 text-xs text-slate-600">
+                                <span class="p-1 bg-blue-100 text-blue-800 rounded font-bold">F2</span>
+                                <div><strong>Coherencia:</strong> Corroborar que los resultados sean consecuencia directa del método aprobado en el Hito 1.</div>
+                            </div>
+                            <div class="flex items-start gap-2 text-xs text-slate-600">
+                                <span class="p-1 bg-teal-100 text-teal-800 rounded font-bold">F3</span>
+                                <div><strong>Lógica:</strong> Lectura minuciosa centrada en la claridad al describir modelos o cálculos técnicos.</div>
+                            </div>
+                            <div class="flex items-start gap-2 text-xs text-slate-600">
+                                <span class="p-1 bg-slate-100 text-slate-700 rounded font-bold">F4</span>
+                                <div><strong>Ortografía:</strong> Seguimiento y castigo de faltas recurrentes ya advertidas en el primer hito.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HITO 3 CARD -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold text-slate-900">Hito 3</h3>
+                            <span class="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">100% Final</span>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-700 mb-2">Secciones Esperadas:</p>
+                        <p class="text-xs text-indigo-600 font-medium mb-4">Todo el documento consolidado · Discusión de Resultados · Conclusiones definitivas · Anexos y Referencias Finales.</p>
+                        
+                        <div class="space-y-3 pt-4 border-t border-slate-100">
+                            <div class="flex items-start gap-2 text-xs text-slate-600">
+                                <span class="p-1 bg-amber-100 text-amber-800 rounded font-bold">F1</span>
+                                <div><strong>Anatomía:</strong> Verificación final de la maquetación. Revisión exhaustiva de índices contra páginas reales.</div>
+                            </div>
+                            <div class="flex items-start gap-2 text-xs text-slate-600">
+                                <span class="p-1 bg-blue-100 text-blue-800 rounded font-bold">F2</span>
+                                <div><strong>Coherencia:</strong> Las conclusiones deben ligarse de forma unívoca a cada objetivo específico del Hito 1.</div>
+                            </div>
+                            <div class="flex items-start gap-2 text-xs text-slate-600">
+                                <span class="p-1 bg-teal-100 text-teal-800 rounded font-bold">F3</span>
+                                <div><strong>Lógica:</strong> Enfoque de revisión detallada en la capacidad de síntesis de la Discusión y Conclusiones.</div>
+                            </div>
+                            <div class="flex items-start gap-2 text-xs text-slate-600">
+                                <span class="p-1 bg-violet-100 text-violet-800 rounded font-bold">F4</span>
+                                <div><strong>Ortografía (Lupa):</strong> Corrección ortográfica exhaustiva de punta a punta. Nada puede quedar sin pulir.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SECCIÓN 3: GENERADOR DE FEEDBACK ================= -->
+        <section id="section-generador" class="hidden space-y-8">
+            <div class="text-center max-w-2xl mx-auto mb-6">
+                <span class="px-3 py-1 text-xs font-semibold text-emerald-800 bg-emerald-100 rounded-full uppercase tracking-wider">Productividad Académica</span>
+                <h2 class="text-3xl font-extrabold text-slate-900 mt-2">Generador de Retroalimentación Rápida</h2>
+                <p class="text-slate-600 mt-2">Durante tu corrección, haz clic en las faltas detectadas a continuación para compilar automáticamente una nota de retroalimentación estructurada y formal.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Selectores de Errores -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Faltas Fase 1 -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="font-bold text-slate-900 flex items-center gap-2 mb-3">
+                            <span class="w-3.5 h-3.5 rounded-full bg-amber-500"></span>
+                            Faltas Formales (Fase 1)
+                        </h4>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="toggleError('f1_indices', 'Falta generar o actualizar los índices generales, de tablas o de figuras.')" class="err-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">Falta Índices</button>
+                            <button onclick="toggleError('f1_secciones', 'El documento omite secciones obligatorias exigidas para este Hito académico.')" class="err-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">Faltan Capítulos Clave</button>
+                            <button onclick="toggleError('f1_tablas', 'Las tablas, figuras o ecuaciones integradas no se encuentran debidamente indexadas o numeradas conforme a la norma de la carrera.')" class="err-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">Tablas/Figuras sin Indexar</button>
+                            <button onclick="toggleError('f1_citas_formato', 'Las citas bibliográficas en el cuerpo del documento o el listado final no respetan un único formato estándar de referencias.')" class="err-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">Formato de Citas Incorrecto</button>
+                        </div>
+                    </div>
+
+                    <!-- Faltas Fase 2 -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="font-bold text-slate-900 flex items-center gap-2 mb-3">
+                            <span class="w-3.5 h-3.5 rounded-full bg-blue-500"></span>
+                            Faltas de Coherencia (Fase 2)
+                        </h4>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="toggleError('f2_objetivos', 'Se observa desconexión entre el planteamiento del problema de ingeniería y los objetivos específicos propuestos.')" class="err-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">Objetivos Desconectados</button>
+                            <button onclick="toggleError('f2_metodologia', 'La metodología de trabajo detallada no demuestra viabilidad ni coherencia para alcanzar los objetivos específicos planteados.')" class="err-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">Metodología Insuficiente</button>
+                            <button onclick="toggleError('f2_conclusiones', 'La sección de conclusiones no responde de manera directa, cuantitativa o cualitativa, a los objetivos específicos fijados en la propuesta.')" class="err-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">Conclusiones sin Responder Objetivos</button>
+                        </div>
+                    </div>
+
+                    <!-- Faltas Fase 3 -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="font-bold text-slate-900 flex items-center gap-2 mb-3">
+                            <span class="w-3.5 h-3.5 rounded-full bg-teal-500"></span>
+                            Faltas de Lógica y Estilo (Fase 3)
+                        </h4>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="toggleError('f3_ideas', 'Se detectan pasajes o párrafos de redacción confusa que dificultan comprender la idea central que se intenta plasmar.')" class="err-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">Ideas Confusas/Párrafos Largos</button>
+                            <button onclick="toggleError('f3_impersonal', 'Debe cuidarse la redacción científica utilizando rigurosamente la voz impersonal (ej. &quot;se estimó&quot;, &quot;se modeló&quot;) en lugar de redactar en primera persona.')" class="err-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">Falta de Voz Impersonal</button>
+                            <button onclick="toggleError('f3_terminologia', 'Se requiere mayor rigurosidad y precisión técnica en el vocabulario utilizado, evitando términos coloquiales, imprecisos o ambiguos en la descripción de los procesos.')" class="err-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">Vocabulario Técnico Impreciso</button>
+                        </div>
+                    </div>
+
+                    <!-- Faltas Fase 4 -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="font-bold text-slate-900 flex items-center gap-2 mb-3">
+                            <span class="w-3.5 h-3.5 rounded-full bg-violet-500"></span>
+                            Faltas de Ortografía y Mecánica (Fase 4)
+                        </h4>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="toggleError('f4_verbos', 'Se observa una omisión recurrente de tildes en los verbos de acción redactados en tiempo pasado (ej. se calculó, se diseñó, se realizó).')" class="err-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">Verbos Pasado sin Tilde</button>
+                            <button onclick="toggleError('f4_coma', 'Cuidado con el uso incorrecto de signos de puntuación, específicamente con la separación errónea mediante comas entre el sujeto y su predicado directo (coma criminal).')" class="err-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">Coma entre Sujeto y Predicado</button>
+                            <button onclick="toggleError('f4_concordancia', 'Se aprecian discordancias reiteradas de género o número gramatical a lo largo del texto (ej. &quot;los datos analizado&quot;, &quot;la metodología descritos&quot;).')" class="err-btn px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 transition">Discordancia Género/Número</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel de Salida y Generación de Nota -->
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-md h-fit flex flex-col space-y-4">
+                    <h3 class="text-lg font-bold text-slate-900">Retroalimentación Generada</h3>
+                    
+                    <!-- Selector de Hito para Modificar Introducción del Mensaje -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Hito de la Entrega:</label>
+                        <select id="hito-select" onchange="updateFeedbackText()" class="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:outline-none text-slate-700">
+                            <option value="Hito 1">Hito 1 - Avance Teórico-Metodológico</option>
+                            <option value="Hito 2">Hito 2 - Avance de Desarrollo Técnico</option>
+                            <option value="Hito 3">Hito 3 - Entrega Final / Pre-defensa</option>
+                        </select>
+                    </div>
+
+                    <!-- Cuadro de texto de Feedback -->
+                    <textarea id="feedback-box" class="w-full h-80 bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs font-mono text-slate-700 leading-relaxed focus:ring-2 focus:ring-blue-500 focus:outline-none" readonly>Selecciona errores de los paneles de la izquierda para comenzar a armar el feedback automáticamente...</textarea>
+
+                    <!-- Botón de Copiar -->
+                    <button onclick="copyFeedback()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg text-sm transition flex items-center justify-center gap-2 shadow">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                        Copiar al Portapapeles
+                    </button>
+                    
+                    <!-- Alerta de Copiado -->
+                    <div id="copy-toast" class="hidden text-xs text-center text-emerald-700 bg-emerald-50 border border-emerald-200 rounded py-2 transition-all">
+                        ¡Mensaje copiado con éxito! Listo para pegar en el LMS o correo.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 text-slate-400 py-8 border-t border-slate-800 text-center text-xs mt-20">
+        <p>© 2026 Manual de Revisión Técnica para Proyectos de Título.</p>
+        <p class="mt-1">Estrategia metodológica orientada a la eficiencia académica y rigor científico en Obras Civiles.</p>
+    </footer>
+
+    <!-- JavaScript para la interacción de la app -->
+    <script>
+        // Manejador de pestañas
+        function switchTab(tabId) {
+            const sections = ['fases', 'hitos', 'generador'];
+            sections.forEach(sec => {
+                const el = document.getElementById(`section-${sec}`);
+                const btn = document.getElementById(`tab-btn-${sec}`);
+                if (sec === tabId) {
+                    el.classList.remove('hidden');
+                    btn.classList.add('bg-blue-600', 'text-white', 'shadow');
+                    btn.classList.remove('text-slate-300', 'hover:text-white', 'hover:bg-slate-800');
+                } else {
+                    el.classList.add('hidden');
+                    btn.classList.remove('bg-blue-600', 'text-white', 'shadow');
+                    btn.classList.add('text-slate-300', 'hover:text-white', 'hover:bg-slate-800');
+                }
+            });
+        }
+
+        // Almacenamiento temporal de comentarios seleccionados
+        const selectedErrors = {};
+
+        function toggleError(errorId, commentText) {
+            const button = event.currentTarget;
+            if (selectedErrors[errorId]) {
+                delete selectedErrors[errorId];
+                // Restaurar estilo de botón
+                button.classList.remove('bg-blue-50', 'border-blue-500', 'text-blue-700');
+                button.classList.add('border-slate-200', 'text-slate-600');
+            } else {
+                selectedErrors[errorId] = commentText;
+                // Marcar estilo de activo
+                button.classList.add('bg-blue-50', 'border-blue-500', 'text-blue-700');
+                button.classList.remove('border-slate-200', 'text-slate-600');
+            }
+            updateFeedbackText();
+        }
+
+        function updateFeedbackText() {
+            const hito = document.getElementById('hito-select').value;
+            const textarea = document.getElementById('feedback-box');
+            
+            if (Object.keys(selectedErrors).length === 0) {
+                textarea.value = "Selecciona errores de los paneles de la izquierda para comenzar a armar el feedback automáticamente...";
+                return;
+            }
+
+            let intro = "";
+            let finalInst = "";
+
+            if (hito === "Hito 1") {
+                intro = "Estimado/a estudiante,\n\nHe finalizado la revisión de tu avance correspondiente al Hito 1 (Fundamentos y Planteamiento). A continuación, se detallan los aspectos técnicos, de coherencia y de redacción que debes rectificar:\n";
+                finalInst = "\n\nPor favor, aborda estas observaciones prioritariamente. La coherencia formal y metodológica en este hito es crucial para habilitar el desarrollo técnico de las siguientes etapas.";
+            } else if (hito === "Hito 2") {
+                intro = "Estimado/a estudiante,\n\nHe revisado el avance de tu Hito 2 enfocado en el Desarrollo de Ingeniería y Resultados. Se aprecian progresos, pero es imperativo que atiendas las siguientes observaciones críticas antes de continuar al cierre del proyecto:\n";
+                finalInst = "\n\nTrabaja en estas correcciones de fondo y de forma. Recuerda que no debes postergar la pulcritud ortográfica para la entrega final; el rigor técnico se evalúa paso a paso.";
+            } else {
+                intro = "Estimado/a estudiante,\n\nComparto las observaciones resultantes de la revisión minuciosa de tu Borrador Final de Proyecto de Título (Hito 3). Estos puntos deben corregirse al detalle para asegurar la aprobación y un correcto desempeño en tu defensa de título:\n";
+                finalInst = "\n\nRealiza una autocrítica exhaustiva del documento completo antes de su entrega definitiva en la plataforma de la carrera. El documento debe presentarse impecable.";
+            }
+
+            let body = "";
+            let counter = 1;
+            for (const key in selectedErrors) {
+                body += `\n${counter}. ${selectedErrors[key]}`;
+                counter++;
+            }
+
+            textarea.value = `${intro}${body}${finalInst}`;
+        }
+
+        function copyFeedback() {
+            const textarea = document.getElementById('feedback-box');
+            if (textarea.value.includes("Selecciona errores")) return;
+
+            textarea.select();
+            textarea.setSelectionRange(0, 99999); // Para móviles
+
+            try {
+                // Compatible con iFrames usando el método recomendado
+                document.execCommand('copy');
+                const toast = document.getElementById('copy-toast');
+                toast.classList.remove('hidden');
+                setTimeout(() => {
+                    toast.classList.add('hidden');
+                }, 4000);
+            } catch (err) {
+                console.error('Error al intentar copiar', err);
+            }
+        }
+    </script>
+</body>
+</html>
