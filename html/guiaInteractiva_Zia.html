@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructivo de Revisión - Proyecto de Título</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Montserrat:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-dark: #1a365d; /* Azul institucional oscuro */
+            --primary-light: #2b6cb0; /* Azul medio */
+            --bg-color: #f7fafc;
+            --text-main: #2d3748;
+            --text-light: #718096;
+            --accent-1: #3182ce; /* Fase 1 */
+            --accent-2: #38a169; /* Fase 2 */
+            --accent-3: #d69e2e; /* Fase 3 */
+            --accent-4: #805ad5; /* Fase 4 */
+            --white: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-light) 100%);
+            color: var(--white);
+            padding: 40px 30px;
+            text-align: center;
+            border-bottom: 6px solid var(--accent-3);
+        }
+
+        header h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        header .university {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            background: rgba(255,255,255,0.2);
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        .macro-concept {
+            text-align: center;
+            padding: 20px;
+            background: #edf2f7;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            color: var(--primary-dark);
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+        
+        .arrow {
+            font-size: 1.5rem;
+            color: var(--text-light);
+        }
+
+        .timeline {
+            position: relative;
+            padding: 30px;
+        }
+
+        .phase-card {
+            display: flex;
+            margin-bottom: 30px;
+            position: relative;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .phase-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .phase-number {
+            width: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: var(--white);
+            text-align: center;
+            padding: 10px;
+        }
+
+        .phase-number span {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .phase-number h2 {
+            font-size: 3rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .bg-1 { background: var(--accent-1); }
+        .bg-2 { background: var(--accent-2); }
+        .bg-3 { background: var(--accent-3); }
+        .bg-4 { background: var(--accent-4); }
+
+        .phase-content {
+            padding: 20px;
+            flex: 1;
+        }
+
+        .phase-content h3 {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--primary-dark);
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+            border-bottom: 2px solid #edf2f7;
+            padding-bottom: 5px;
+        }
+
+        .reading-type {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--primary-light);
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .phase-content ul {
+            list-style: none;
+            margin-bottom: 15px;
+        }
+
+        .phase-content ul li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+            font-size: 0.95rem;
+        }
+
+        .phase-content ul li::before {
+            content: "✔";
+            position: absolute;
+            left: 0;
+            color: var(--primary-light);
+            font-weight: bold;
+        }
+
+        .action-box {
+            background: #f7fafc;
+            border-left: 4px solid;
+            padding: 10px 15px;
+            font-size: 0.9rem;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .action-1 { border-color: var(--accent-1); background: #ebf8ff; }
+        .action-2 { border-color: var(--accent-2); background: #f0fff4; }
+        .action-3 { border-color: var(--accent-3); background: #fffaf0; }
+        .action-4 { border-color: var(--accent-4); background: #faf5ff; }
+
+        .action-box strong {
+            display: block;
+            color: var(--primary-dark);
+            margin-bottom: 3px;
+        }
+
+        footer {
+            background: var(--primary-dark);
+            color: var(--white);
+            padding: 25px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        footer strong {
+            color: var(--accent-3);
+        }
+
+        @media (max-width: 768px) {
+            header h1 { font-size: 1.6rem; }
+            .phase-card { flex-direction: column; }
+            .phase-number { width: 100%; flex-direction: row; justify-content: flex-start; gap: 15px; padding: 15px; }
+            .phase-number h2 { font-size: 2rem; }
+            .macro-concept { flex-direction: column; gap: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Estructura de Revisión</h1>
+            <p>Proyectos de Título - Ingeniería Civil en Obras Civiles</p>
+            <div class="university">Universidad de Los Lagos</div>
+        </header>
+
+        <div class="macro-concept">
+            <span>MACRO (Estructura)</span>
+            <span class="arrow">➜</span>
+            <span>FONDO (Ideas y Redacción)</span>
+            <span class="arrow">➜</span>
+            <span>MICRO (Ortografía y Gramática)</span>
+        </div>
+
+        <div class="timeline">
+            <!-- FASE 1 -->
+            <div class="phase-card">
+                <div class="phase-number bg-1">
+                    <span>Fase</span>
+                    <h2>01</h2>
+                </div>
+                <div class="phase-content">
+                    <h3>Estructural y de Forma</h3>
+                    <span class="reading-type">👁️ Tipo de lectura: Escaneo visual (No se lee el texto)</span>
+                    <ul>
+                        <li>Estructura completa (Portada, Resumen, Intro, Capítulos, Bibliografía).</li>
+                        <li>Indexación: Tablas y figuras numeradas, tituladas y citadas en el texto.</li>
+                        <li>Índices automáticos y páginas coincidentes.</li>
+                        <li>Formato y norma de citación (Ej. APA o IEEE).</li>
+                    </ul>
+                    <div class="action-box action-1">
+                        <strong>⚡ Acción del Académico:</strong>
+                        Filtro de entrada. Si excede 5 errores formales, se devuelve sin leer el fondo.
+                    </div>
+                </div>
+            </div>
+
+            <!-- FASE 2 -->
+            <div class="phase-card">
+                <div class="phase-number bg-2">
+                    <span>Fase</span>
+                    <h2>02</h2>
+                </div>
+                <div class="phase-content">
+                    <h3>Coherencia y "Hilo Conductor"</h3>
+                    <span class="reading-type">📖 Tipo de lectura: Rápida (Skimming). Sin detenerse en detalles.</span>
+                    <ul>
+                        <li>Lectura de: Resumen, Introducción, Títulos de Capítulos y Conclusiones.</li>
+                        <li>¿Se entiende la idea central y el problema de ingeniería?</li>
+                        <li>¿Los objetivos planteados se responden en las conclusiones?</li>
+                        <li>¿La metodología tiene lógica según el problema?</li>
+                    </ul>
+                    <div class="action-box action-2">
+                        <strong>⚡ Acción del Académico:</strong>
+                        Si la idea no se entiende, pedir reestructurar. No corregir redacción de capítulos a reescribir.
+                    </div>
+                </div>
+            </div>
+
+            <!-- FASE 3 -->
+            <div class="phase-card">
+                <div class="phase-number bg-3">
+                    <span>Fase</span>
+                    <h2>03</h2>
+                </div>
+                <div class="phase-content">
+                    <h3>Redacción y Estilo Técnico</h3>
+                    <span class="reading-type">✍️ Tipo de lectura: Profunda y crítica. Párrafo a párrafo.</span>
+                    <ul>
+                        <li>Claridad, concisión y eliminación de redundancias.</li>
+                        <li>Voz académica (Impersonal o pasiva: "Se diseñó..." en vez de "Yo diseñé...").</li>
+                        <li>Precisión técnica de términos (Ej. Esfuerzo vs. Deformación).</li>
+                        <li>Soporte empírico: Toda afirmación técnica debe tener cita.</li>
+                    </ul>
+                    <div class="action-box action-3">
+                        <strong>⚡ Acción del Académico:</strong>
+                        Comentarios en Word (Ctrl+Alt+M). Ej: "Reescribir", "Falta cita", "Idea confusa".
+                    </div>
+                </div>
+            </div>
+
+            <!-- FASE 4 -->
+            <div class="phase-card">
+                <div class="phase-number bg-4">
+                    <span>Fase</span>
+                    <h2>04</h2>
+                </div>
+                <div class="phase-content">
+                    <h3>Revisión Micro (Ortografía y Gramática)</h3>
+                    <span class="reading-type">🔍 Tipo de lectura: Mecánica y detallista. Palabra por palabra.</span>
+                    <ul>
+                        <li>Concordancia gramatical y tiempos verbales (Metodología en pasado, Marco Teórico en presente).</li>
+                        <li>Puntuación: Uso correcto de comas (no separar sujeto de verbo) y punto y coma.</li>
+                        <li>Ortografía y mayúsculas (Normas ICHA en planos y especificaciones).</li>
+                    </ul>
+                    <div class="action-box action-4">
+                        <strong>⚡ Acción del Académico:</strong>
+                        Reservada SOLO para el documento final. Apoyo en corrector de Word estricto para optimizar tiempo.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p><strong>Aplicación en el Semestre:</strong> Fases 1 a 3 para avances parciales (Notas 1 y 2). Fases 1 a 4 para entrega final (Nota 3).</p>
+        </footer>
+    </div>
+
+</body>
+</html>
