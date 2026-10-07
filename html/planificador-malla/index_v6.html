@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planificador de Plan de Estudio</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel (para JSX) -->
+    <script src="https://unpkg.com/@babel/standalone@7.23.10/babel.min.js"></script>
+    
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        @media print {
+            @page { 
+                size: landscape; 
+                margin: 8mm 10mm; 
+            }
+            body { 
+                background-color: white !important; 
+                color: #000 !important;
+                -webkit-print-color-adjust: exact; 
+                print-color-adjust: exact; 
+            }
+            .no-print { 
+                display: none !important; 
+            }
+            
+            /* Contenedor de cuadrícula 2x5 para los 10 semestres */
+            .print-grid {
+                display: grid !important;
+                grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+                grid-template-rows: auto auto !important;
+                gap: 8px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                overflow: visible !important;
+            }
+            
+            /* Columnas de Semestre estructuradas */
+            .print-col {
+                width: 100% !important;
+                margin-bottom: 0 !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                background-color: #f8fafc !important; /* slate-50 */
+                border: 1px solid #cbd5e1 !important; /* slate-300 */
+                border-radius: 6px !important;
+                display: flex !important;
+                flex-direction: column !important;
+                height: auto !important;
+            }
+
+            /* Contenedor interno de cursos */
+            .print-courses-container {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 6px !important;
+                padding: 6px !important;
+                overflow: visible !important;
+                max-height: none !important;
+            }
+
+            /* Forzar el comportamiento de página única limpia */
+            html, body, #root {
+                height: auto !important;
+                min-height: 0 !important;
+                overflow: visible !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const SCT_MULTIPLIER = 17 / 27;
+
+        // Límite recomendado de previaturas entrantes y salientes por asignatura
+        const MAX_PREVIATURAS = 2;
+
+        // Garantiza que cada asignatura tenga el arreglo de previaturas
+        const normalizeSemesters = (data) => data.map(sem => ({
+            ...sem,
+            courses: (sem.courses || []).map(course => ({
+                ...course,
+                prerequisites: Array.isArray(course.prerequisites) ? course.prerequisites : []
+            }))
+        }));
+
+        // Geometría del grafo de previaturas
+        const GRAPH_NODE_W = 168;
+        const GRAPH_NODE_H = 56;
+        const GRAPH_COL_GAP = 56;
+        const GRAPH_ROW_GAP = 16;
+        const GRAPH_TOP_PAD = 40;
+        const GRAPH_EDGE_MARGIN = 36;
+
+        // Paleta por semestre (evita amarillos, reservados para advertencias)
+        const GRAPH_PALETTE = [
+            { fill: '#e0f2fe', stroke: '#7dd3fc' },
+            { fill: '#dcfce7', stroke: '#86efac' },
+            { fill: '#ede9fe', stroke: '#c4b5fd' },
+            { fill: '#fae8ff', stroke: '#f0abfc' },
+            { fill: '#ffe4e6', stroke: '#fda4af' },
+            { fill: '#cffafe', stroke: '#67e8f9' },
+            { fill: '#e0e7ff', stroke: '#a5b4fc' },
+            { fill: '#d1fae5', stroke: '#6ee7b7' },
+            { fill: '#f3e8ff', stroke: '#d8b4fe' },
+            { fill: '#f1f5f9', stroke: '#cbd5e1' }
+        ];
+
+        const wrapNodeLabel = (text, maxChars = 22, maxLines = 2) => {
+            const words = String(text || '').trim().split(/\s+/).filter(Boolean);
+            const lines = [];
+            let current = '';
+
+            words.forEach(word => {
+                const candidate = current ? `${current} ${word}` : word;
+                if (!current || candidate.length <= maxChars) {
+                    current = candidate;
+                } else {
+                    lines.push(current);
+                    current = word;
+                }
+            });
+            if (current) lines.push(current);
+
+            while (lines.length > maxLines) {
+                const last = lines.pop();
+                lines[lines.length - 1] = `${lines[lines.length - 1]} ${last}`;
+            }
+
+            return lines.map(line => line.length > maxChars ? `${line.slice(0, maxChars - 1).trimEnd()}…` : line);
+        };
+
+        const calcularSCT = (dd, ta) => {
+            const total = (Number(dd) + Number(ta)) * SCT_MULTIPLIER;
+            return isNaN(total) ? 0 : Math.round(total);
+        };
+
+        const INITIAL_DATA = [
+            { id: 1, title: 'Semestre I', courses: [
+                { id: '1-1', name: 'Cálculo I', dd: 6, ta: 6, isLocked: false },
+                { id: '1-2', name: 'Álgebra I', dd: 6, ta: 6, isLocked: false },
+                { id: '1-3', name: 'Programación', dd: 4, ta: 4, isLocked: false },
+                { id: '1-4', name: 'Taller de Introducción a la Ingeniería', dd: 2, ta: 2, isLocked: false },
+                { id: '1-5', name: 'Hab. com. para Ingenieros', dd: 2, ta: 3, isLocked: false }
+            ]},
+            { id: 2, title: 'Semestre II', courses: [
+                { id: '2-1', name: 'Cálculo II', dd: 6, ta: 6, isLocked: false },
+                { id: '2-2', name: 'Álgebra II', dd: 6, ta: 6, isLocked: false },
+                { id: '2-3', name: 'Física Mecánica', dd: 5, ta: 5, isLocked: false },
+                { id: '2-4', name: 'Química', dd: 4, ta: 4, isLocked: false },
+                { id: '2-5', name: 'Ciudadanía para el buen vivir', dd: 2, ta: 2, isLocked: false }
+            ]},
+            { id: 3, title: 'Semestre III', courses: [
+                { id: '3-1', name: 'Cálculo Multivariable', dd: 6, ta: 6, isLocked: false },
+                { id: '3-2', name: 'Electromagnetismo', dd: 5, ta: 5, isLocked: false },
+                { id: '3-3', name: 'Inglés I', dd: 2, ta: 3, isLocked: false }
+            ]},
+            { id: 4, title: 'Semestre IV', courses: [
+                { id: '4-1', name: 'Ecuaciones Diferenciales', dd: 6, ta: 6, isLocked: false },
+                { id: '4-2', name: 'Física Disciplinar', dd: 5, ta: 5, isLocked: false },
+                { id: '4-3', name: 'Inglés II', dd: 2, ta: 3, isLocked: false }
+            ]},
+            { id: 5, title: 'Semestre V', courses: [
+                { id: '5-1', name: 'Cálculo Numérico', dd: 4, ta: 4, isLocked: false },
+                { id: '5-2', name: 'Estadística y Probabilidad', dd: 4, ta: 4, isLocked: false },
+                { id: '5-3', name: 'Inglés III', dd: 2, ta: 3, isLocked: false },
+                { id: '5-4', name: 'Economía', dd: 3, ta: 3, isLocked: false }
+            ]},
+            { id: 6, title: 'Semestre VI', courses: [
+                { id: '6-1', name: 'Inglés para Ingenieros', dd: 2, ta: 3, isLocked: false },
+                { id: '6-2', name: 'Investigación Operativa', dd: 4, ta: 4, isLocked: false }
+            ]},
+            { id: 7, title: 'Semestre VII', courses: [
+                { id: '7-1', name: 'Inglés Técnico "Especialidad"', dd: 2, ta: 3, isLocked: false },
+                { id: '7-2', name: 'Formulación y Evaluación de Proy.', dd: 4, ta: 4, isLocked: false }
+            ]},
+            { id: 8, title: 'Semestre VIII', courses: [
+                { id: '8-1', name: 'Electivo Profesional', dd: 4, ta: 4, isLocked: false },
+                { id: '8-2', name: 'Taller U-Lab Disciplinar I', dd: 4, ta: 6, isLocked: false }
+            ]},
+            { id: 9, title: 'Semestre IX', courses: [
+                { id: '9-1', name: 'Electivo Profesional', dd: 4, ta: 4, isLocked: false },
+                { id: '9-2', name: 'Taller U-Lab Disciplinar II', dd: 4, ta: 6, isLocked: false },
+                { id: '9-3', name: 'Anteproyecto de Título', dd: 2, ta: 4, isLocked: false }
+            ]},
+            { id: 10, title: 'Semestre X', courses: [
+                { id: '10-1', name: 'Proyecto de Título', dd: 0, ta: 20, isLocked: false },
+                { id: '10-2', name: 'Práctica Profesional', dd: 0, ta: 0, isLocked: false }
+            ]}
+        ];
+
+        function App() {
+            const [semesters, setSemesters] = React.useState(() => normalizeSemesters(INITIAL_DATA));
+            const [careerName, setCareerName] = React.useState('Plan de Estudio: Ingeniería Civil Informática');
+            const [currentFileName, setCurrentFileName] = React.useState(null); 
+            const [isEditingCareer, setIsEditingCareer] = React.useState(false);
+            const [tempCareerName, setTempCareerName] = React.useState('');
+            const [activeTab, setActiveTab] = React.useState('malla');
+            const [prereqFilter, setPrereqFilter] = React.useState('');
+            const [showPrereqInMalla, setShowPrereqInMalla] = React.useState(true);
+            const [graphHoverId, setGraphHoverId] = React.useState(null);
+            const [graphSelectedId, setGraphSelectedId] = React.useState(null);
+            const [graphZoom, setGraphZoom] = React.useState(1);
+            const graphViewportRef = React.useRef(null);
+            const graphFittedRef = React.useRef(false);
+            const fileInputRef = React.useRef(null);
+
+            const downloadJson = (data, filename) => {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", filename);
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            };
+
+            const handleNew = () => {
+                setSemesters(normalizeSemesters(INITIAL_DATA));
+                setCareerName('Plan de Estudio: Ingeniería Civil Informática');
+                setCurrentFileName(null);
+                setPrereqFilter('');
+            };
+
+            const handleSave = () => {
+                if (!currentFileName) {
+                    handleSaveAs();
+                    return;
+                }
+                const payload = { careerName, semesters };
+                const fileName = currentFileName.endsWith('.json') ? currentFileName : `${currentFileName}.json`;
+                downloadJson(payload, fileName);
+            };
+
+            const handleSaveAs = async () => {
+                // Extraer el nombre base sin la extensión para que el usuario solo edite el nombre
+                const baseName = currentFileName 
+                    ? currentFileName.replace(/\.json$/i, '') 
+                    : `malla_${careerName.toLowerCase().replace(/[^a-z0-9]/gi, '_')}`;
+                
+                const payload = { careerName, semesters };
+                const dataStr = JSON.stringify(payload, null, 2);
+
+                try {
+                    // Abre la ventana del sistema operativo para elegir dónde guardar
+                    if ('showSaveFilePicker' in window) {
+                        const handle = await window.showSaveFilePicker({
+                            suggestedName: baseName,
+                            types: [{
+                                description: 'Archivo JSON',
+                                accept: {'application/json': ['.json']},
+                            }],
+                        });
+                        const writable = await handle.createWritable();
+                        await writable.write(dataStr);
+                        await writable.close();
+                        setCurrentFileName(handle.name);
+                    } else {
+                        // Método de respaldo para navegadores antiguos
+                        const fileName = prompt("Nombre del archivo (sin extensión):", baseName);
+                        if (fileName) {
+                            const cleanName = fileName.replace(/\.json$/i, '');
+                            const finalName = `${cleanName}.json`;
+                            setCurrentFileName(finalName);
+                            downloadJson(payload, finalName);
+                        }
+                    }
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.error("Error al guardar:", err);
+                        alert("Ocurrió un error al guardar el archivo.");
+                    }
+                }
+            };
+
+            const handleLoad = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const loadedData = JSON.parse(event.target.result);
+                        setCurrentFileName(file.name);
+                        if (loadedData.careerName && loadedData.semesters) {
+                            setCareerName(loadedData.careerName);
+                            setSemesters(normalizeSemesters(loadedData.semesters));
+                        } else if (Array.isArray(loadedData)) {
+                            setSemesters(normalizeSemesters(loadedData));
+                        }
+                    } catch (error) {
+                        alert("Error al leer el archivo. Asegúrate que sea un JSON válido.");
+                    }
+                };
+                reader.readAsText(file);
+                e.target.value = ''; 
+            };
+
+            const handlePrint = () => window.print();
+
+            const addCourse = (semesterId) => {
+                setSemesters(semesters.map(sem => {
+                    if (sem.id === semesterId) {
+                        return { ...sem, courses: [...sem.courses, { id: Date.now().toString(), name: 'Nueva Asignatura', dd: 0, ta: 0, isLocked: false, prerequisites: [] }] };
+                    }
+                    return sem;
+                }));
+            };
+
+            const removeCourse = (semesterId, courseId) => {
+                setSemesters(semesters.map(sem => ({
+                    ...sem,
+                    courses: sem.courses
+                        .filter(c => !(sem.id === semesterId && c.id === courseId))
+                        // Elimina referencias a la asignatura borrada en el resto de la malla
+                        .map(c => (c.prerequisites || []).includes(courseId)
+                            ? { ...c, prerequisites: c.prerequisites.filter(pid => pid !== courseId) }
+                            : c)
+                })));
+            };
+
+            const updateCourse = (semesterId, courseId, field, value) => {
+                setSemesters(semesters.map(sem => {
+                    if (sem.id === semesterId) {
+                        return { ...sem, courses: sem.courses.map(c => c.id === courseId ? { ...c, [field]: value } : c) };
+                    }
+                    return sem;
+                }));
+            };
+
+            const toggleLockCourse = (semesterId, courseId) => {
+                setSemesters(semesters.map(sem => {
+                    if (sem.id === semesterId) {
+                        return { ...sem, courses: sem.courses.map(c => c.id === courseId ? { ...c, isLocked: !c.isLocked } : c) };
+                    }
+                    return sem;
+                }));
+            };
+
+            const setPrerequisites = (courseId, nextPrerequisites) => {
+                setSemesters(semesters.map(sem => ({
+                    ...sem,
+                    courses: sem.courses.map(c => c.id === courseId ? { ...c, prerequisites: nextPrerequisites } : c)
+                })));
+            };
+
+            const addPrerequisite = (courseId, prereqId) => {
+                if (!prereqId || prereqId === courseId) return;
+                const course = allCourses.find(c => c.id === courseId);
+                if (!course) return;
+                const current = course.prerequisites || [];
+                if (current.includes(prereqId)) return;
+                setPrerequisites(courseId, [...current, prereqId]);
+            };
+
+            const removePrerequisite = (courseId, prereqId) => {
+                const course = allCourses.find(c => c.id === courseId);
+                if (!course) return;
+                setPrerequisites(courseId, (course.prerequisites || []).filter(pid => pid !== prereqId));
+            };
+
+            const calculateSemesterStats = (courses) => {
+                return courses.reduce((acc, course) => {
+                    return {
+                        sct: acc.sct + calcularSCT(course.dd, course.ta),
+                        dd: acc.dd + (Number(course.dd) || 0),
+                        ta: acc.ta + (Number(course.ta) || 0)
+                    };
+                }, { sct: 0, dd: 0, ta: 0 });
+            };
+
+            const getYearlySCT = (semesterId) => {
+                const isOdd = semesterId % 2 !== 0;
+                const pairId = isOdd ? semesterId + 1 : semesterId - 1;
+                const currentSem = semesters.find(s => s.id === semesterId);
+                const pairedSem = semesters.find(s => s.id === pairId);
+
+                const currentSCT = currentSem ? calculateSemesterStats(currentSem.courses).sct : 0;
+                const pairedSCT = pairedSem ? calculateSemesterStats(pairedSem.courses).sct : 0;
+
+                return currentSCT + pairedSCT;
+            };
+
+            const careerStats = React.useMemo(() => {
+                return semesters.reduce((acc, sem) => {
+                    const sStats = calculateSemesterStats(sem.courses);
+                    return {
+                        sct: acc.sct + sStats.sct,
+                        dd: acc.dd + sStats.dd,
+                        ta: acc.ta + sStats.ta
+                    };
+                }, { sct: 0, dd: 0, ta: 0 });
+            }, [semesters]);
+
+            // Lista plana de todas las asignaturas de la malla
+            const allCourses = React.useMemo(() => semesters.flatMap(sem =>
+                sem.courses.map(c => ({ ...c, semesterId: sem.id, semesterTitle: sem.title }))
+            ), [semesters]);
+
+            const courseById = React.useMemo(() => {
+                const map = {};
+                allCourses.forEach(c => { map[c.id] = c; });
+                return map;
+            }, [allCourses]);
+
+            // Grado de entrada (previaturas) y salida (asignaturas que dependen) por asignatura
+            const prereqMap = React.useMemo(() => {
+                const incoming = {};
+                const outgoing = {};
+                allCourses.forEach(c => {
+                    incoming[c.id] = (c.prerequisites || []).filter(pid => courseById[pid]);
+                    outgoing[c.id] = [];
+                });
+                allCourses.forEach(c => incoming[c.id].forEach(pid => outgoing[pid].push(c.id)));
+                return { incoming, outgoing };
+            }, [allCourses, courseById]);
+
+            // Advertencias por superar el límite recomendado de previaturas entrantes/salientes
+            const prereqWarnings = React.useMemo(() => allCourses.reduce((acc, course) => {
+                const incomingCount = prereqMap.incoming[course.id].length;
+                const outgoingCount = prereqMap.outgoing[course.id].length;
+                const reasons = [];
+                if (incomingCount > MAX_PREVIATURAS) reasons.push(`tiene ${incomingCount} previaturas (máx. ${MAX_PREVIATURAS})`);
+                if (outgoingCount > MAX_PREVIATURAS) reasons.push(`es previatura de ${outgoingCount} asignaturas (máx. ${MAX_PREVIATURAS})`);
+                if (reasons.length > 0) acc[course.id] = reasons;
+                return acc;
+            }, {}), [allCourses, prereqMap]);
+
+            const warningCount = Object.keys(prereqWarnings).length;
+            const prereqLinkCount = Object.values(prereqMap.incoming).reduce((acc, list) => acc + list.length, 0);
+
+            // Modelo del grafo: columnas por semestre, ordenadas por baricentro de previaturas
+            const graphModel = React.useMemo(() => {
+                const rawColumns = semesters
+                    .filter(sem => sem.courses.length > 0)
+                    .map(sem => ({ id: sem.id, title: sem.title, ids: sem.courses.map(c => c.id) }));
+
+                const rowOf = (cols, id) => {
+                    for (let c = 0; c < cols.length; c++) {
+                        const index = cols[c].indexOf(id);
+                        if (index !== -1) return index;
+                    }
+                    return null;
+                };
+
+                let ordered = rawColumns.map(col => col.ids.slice());
+                for (let pass = 0; pass < 4; pass++) {
+                    ordered = ordered.map((ids, colIndex) => {
+                        if (colIndex === 0) return ids;
+                        return ids
+                            .map((id, index) => {
+                                const parents = (prereqMap.incoming[id] || [])
+                                    .map(pid => rowOf(ordered, pid))
+                                    .filter(row => row !== null);
+                                const score = parents.length ? parents.reduce((acc, row) => acc + row, 0) / parents.length : index;
+                                return { id, score, index };
+                            })
+                            .sort((a, b) => (a.score - b.score) || (a.index - b.index))
+                            .map(item => item.id);
+                    });
+                }
+
+                const columnHeights = ordered.map(ids => ids.length * GRAPH_NODE_H + Math.max(0, ids.length - 1) * GRAPH_ROW_GAP);
+                const maxColumnHeight = columnHeights.length ? Math.max(...columnHeights) : 0;
+                const svgWidth = GRAPH_EDGE_MARGIN * 2 + ordered.length * GRAPH_NODE_W + Math.max(0, ordered.length - 1) * GRAPH_COL_GAP;
+                const svgHeight = GRAPH_TOP_PAD + maxColumnHeight + 40;
+
+                const positions = {};
+                const lanes = [];
+                ordered.forEach((ids, colIndex) => {
+                    const x = GRAPH_EDGE_MARGIN + colIndex * (GRAPH_NODE_W + GRAPH_COL_GAP);
+                    const firstY = GRAPH_TOP_PAD + (maxColumnHeight - columnHeights[colIndex]) / 2;
+                    const palette = GRAPH_PALETTE[colIndex % GRAPH_PALETTE.length];
+
+                    lanes.push({
+                        key: `lane-${rawColumns[colIndex].id}`,
+                        title: rawColumns[colIndex].title,
+                        x: x - 12,
+                        y: firstY - 26,
+                        width: GRAPH_NODE_W + 24,
+                        height: columnHeights[colIndex] + 32
+                    });
+
+                    ids.forEach((id, rowIndex) => {
+                        const course = courseById[id];
+                        positions[id] = {
+                            x,
+                            y: firstY + rowIndex * (GRAPH_NODE_H + GRAPH_ROW_GAP),
+                            id,
+                            name: course ? course.name : id,
+                            lines: wrapNodeLabel(course ? course.name : id),
+                            semesterTitle: course ? course.semesterTitle : '',
+                            sct: course ? calcularSCT(course.dd, course.ta) : 0,
+                            palette
+                        };
+                    });
+                });
+
+                const edges = [];
+                let anomalyCount = 0;
+
+                ordered.forEach(ids => ids.forEach(id => {
+                    (prereqMap.incoming[id] || []).forEach(prereqId => {
+                        const source = positions[prereqId];
+                        const target = positions[id];
+                        if (!source || !target) return;
+
+                        const x1 = source.x + GRAPH_NODE_W;
+                        const y1 = source.y + GRAPH_NODE_H / 2;
+                        const x2 = target.x;
+                        const y2 = target.y + GRAPH_NODE_H / 2;
+                        // Anómala: la previatura está en la misma etapa o en una posterior
+                        const isAnomaly = x2 <= x1;
+                        if (isAnomaly) anomalyCount += 1;
+
+                        const bulge = isAnomaly ? Math.max(70, Math.abs(y2 - y1) / 2 + 44) : Math.max(28, (x2 - x1) / 2);
+                        const path = isAnomaly
+                            ? `M ${x1} ${y1} C ${x1 + bulge} ${y1}, ${x1 + bulge} ${y2}, ${x2} ${y2}`
+                            : `M ${x1} ${y1} C ${x1 + bulge} ${y1}, ${x2 - bulge} ${y2}, ${x2} ${y2}`;
+
+                        edges.push({ key: `${prereqId}->${id}`, from: prereqId, to: id, path, isAnomaly });
+                    });
+                }));
+
+                const nodes = Object.values(positions).map(node => ({
+                    ...node,
+                    incoming: prereqMap.incoming[node.id].length,
+                    outgoing: prereqMap.outgoing[node.id].length,
+                    warnings: prereqWarnings[node.id] || null
+                }));
+
+                return {
+                    nodes,
+                    edges,
+                    lanes,
+                    svgWidth,
+                    svgHeight,
+                    isolatedCount: nodes.filter(node => node.incoming === 0 && node.outgoing === 0).length,
+                    anomalyCount
+                };
+            }, [semesters, courseById, prereqMap, prereqWarnings]);
+
+            const graphFocusId = graphSelectedId || graphHoverId;
+
+            const graphFocusSet = React.useMemo(() => {
+                if (!graphFocusId || !courseById[graphFocusId]) return null;
+                return new Set([graphFocusId, ...(prereqMap.incoming[graphFocusId] || []), ...(prereqMap.outgoing[graphFocusId] || [])]);
+            }, [graphFocusId, courseById, prereqMap]);
+
+            const fitGraphToWidth = () => {
+                const viewport = graphViewportRef.current;
+                if (!viewport || !graphModel.svgWidth) return;
+                const available = viewport.clientWidth - 48;
+                setGraphZoom(Number(Math.min(1, Math.max(0.35, available / graphModel.svgWidth)).toFixed(2)));
+            };
+
+            React.useEffect(() => {
+                if (activeTab !== 'grafo' || graphFittedRef.current) return;
+                graphFittedRef.current = true;
+                fitGraphToWidth();
+            }, [activeTab, graphModel.svgWidth]);
+
+            const saveCareerName = () => {
+                const finalName = tempCareerName.trim();
+                setCareerName(finalName || 'Planificador de Plan de Estudio');
+                setIsEditingCareer(false);
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+                    <header className="bg-slate-900 text-white p-4 shadow-md shrink-0 no-print">
+                        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                            
+                            {/* Editor del nombre de la carrera */}
+                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                                <i className="ph ph-book-open text-blue-400 text-3xl shrink-0"></i>
+                                <div className="flex-1 min-w-0">
+                                    {isEditingCareer ? (
+                                        <div className="flex items-center gap-2">
+                                            <input 
+                                                type="text" 
+                                                value={tempCareerName}
+                                                onChange={(e) => setTempCareerName(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && saveCareerName()}
+                                                className="text-slate-900 px-2 py-1 rounded text-lg sm:text-xl font-bold w-full sm:w-80 outline-none focus:ring-2 focus:ring-blue-500"
+                                                autoFocus
+                                            />
+                                            <button onClick={saveCareerName} className="text-green-400 hover:text-green-300 transition-colors" title="Guardar nombre">
+                                                <i className="ph-fill ph-check-circle text-2xl"></i>
+                                            </button>
+                                            <button onClick={() => setIsEditingCareer(false)} className="text-red-400 hover:text-red-300 transition-colors" title="Cancelar">
+                                                <i className="ph-fill ph-x-circle text-2xl"></i>
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2 group">
+                                            <h1 className="text-xl font-bold tracking-tight text-white">{careerName}</h1>
+                                            <button 
+                                                onClick={() => {
+                                                    setTempCareerName(careerName);
+                                                    setIsEditingCareer(true);
+                                                }} 
+                                                className="text-slate-400 opacity-0 group-hover:opacity-100 hover:text-blue-400 transition-opacity no-print"
+                                                title="Editar nombre de la carrera"
+                                            >
+                                                <i className="ph ph-pencil-simple text-xl"></i>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2 shrink-0">
+                                <button onClick={handleNew} className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded text-sm transition-colors border border-slate-700">
+                                    <i className="ph ph-file-plus text-lg"></i> <span className="hidden sm:inline">Nuevo</span>
+                                </button>
+                                
+                                <button onClick={() => fileInputRef.current.click()} className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded text-sm transition-colors border border-slate-700">
+                                    <i className="ph ph-folder-open text-lg"></i> <span className="hidden sm:inline">Abrir</span>
+                                </button>
+                                <input type="file" accept=".json" ref={fileInputRef} onChange={handleLoad} className="hidden" />
+
+                                <button 
+                                    onClick={handleSave} 
+                                    className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded text-sm transition-colors border border-slate-700" 
+                                    title="Guardar cambios"
+                                >
+                                    <i className="ph ph-floppy-disk text-lg"></i> <span className="hidden sm:inline">Guardar</span>
+                                </button>
+
+                                <button onClick={handleSaveAs} className="flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded text-sm transition-colors border border-slate-700" title="Guardar como...">
+                                    <i className="ph ph-floppy-disk-back text-lg"></i> <span className="hidden sm:inline">Guardar Como</span>
+                                </button>
+
+                                <div className="w-px h-8 bg-slate-700 mx-1 hidden sm:block"></div>
+                                <button onClick={handlePrint} className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded text-sm font-semibold transition-colors shadow-sm">
+                                    <i className="ph ph-printer text-lg"></i> <span className="hidden sm:inline">Exportar PDF</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Pestañas de navegación */}
+                        <nav className="max-w-7xl mx-auto mt-4 pt-3 border-t border-slate-800 flex gap-1">
+                            <button
+                                onClick={() => setActiveTab('malla')}
+                                className={`flex items-center gap-1.5 px-4 py-2 rounded-t text-sm font-semibold transition-colors ${activeTab === 'malla' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+                            >
+                                <i className="ph ph-squares-four text-lg"></i> Malla Curricular
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('previaturas')}
+                                className={`flex items-center gap-1.5 px-4 py-2 rounded-t text-sm font-semibold transition-colors ${activeTab === 'previaturas' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+                            >
+                                <i className="ph ph-tree-structure text-lg"></i> Previaturas
+                                {warningCount > 0 && (
+                                    <span className="ml-1 bg-amber-400 text-amber-950 text-[10px] font-bold px-1.5 py-0.5 rounded-full" title={`${warningCount} asignatura(s) con advertencia`}>
+                                        {warningCount}
+                                    </span>
+                                )}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('grafo')}
+                                className={`flex items-center gap-1.5 px-4 py-2 rounded-t text-sm font-semibold transition-colors ${activeTab === 'grafo' ? 'bg-blue-600 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
+                            >
+                                <i className="ph ph-share-network text-lg"></i> Grafo de Previaturas
+                            </button>
+                        </nav>
+                    </header>
+
+                    {/* Encabezado académico de nivel LaTeX para la impresión */}
+                    <div className="hidden print:block text-center mb-5 border-b-2 border-slate-800 pb-2">
+                        <div className="flex justify-between items-end">
+                            <div className="text-left">
+                                <span className="text-[10px] tracking-widest text-slate-500 font-mono uppercase">Documento de Planificación Curricular / Proyecto Educativo</span>
+                                <h1 className="text-xl font-bold font-serif text-slate-900 leading-tight">{careerName}</h1>
+                            </div>
+                            <div className="text-right text-[10px] text-slate-600 font-mono leading-relaxed">
+                                <div><strong>SCT Total:</strong> {careerStats.sct} | <strong>Docencia Directa:</strong> {careerStats.dd} hrs | <strong>Trabajo Autónomo:</strong> {careerStats.ta} hrs</div>
+                                <div>Emitido el {new Date().toLocaleDateString('es-CL')} • Generado por Planificador de Estudio</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Barra de opciones de la malla */}
+                    <div className={`${activeTab === 'malla' ? '' : 'hidden'} no-print shrink-0 bg-gray-50 border-b border-slate-200 px-6 py-2 flex items-center justify-between gap-3`}>
+                        <span className="text-xs text-slate-500 truncate">
+                            {prereqLinkCount > 0
+                                ? `${prereqLinkCount} previaturas configuradas en la pestaña «Previaturas».`
+                                : 'Aún no hay previaturas configuradas.'}
+                        </span>
+                        <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm cursor-pointer select-none shrink-0">
+                            <input
+                                type="checkbox"
+                                checked={showPrereqInMalla}
+                                onChange={(e) => setShowPrereqInMalla(e.target.checked)}
+                                className="h-4 w-4 accent-blue-600"
+                            />
+                            Mostrar previaturas en la malla
+                        </label>
+                    </div>
+
+                    <main className={`${activeTab === 'malla' ? '' : 'hidden'} print:block flex-1 overflow-x-auto p-6 print:overflow-visible print:p-0`}>
+                        <div className="flex gap-6 items-start pb-4 w-max print-grid">
+                            {semesters.map((semester) => {
+                                const stats = calculateSemesterStats(semester.courses);
+                                const totalHours = stats.dd + stats.ta;
+                                const isDDOverLimit = stats.dd > 20;
+                                const isTotalOverLimit = totalHours > 48;
+                                const isSCTOverLimit = stats.sct > 33;
+                                const yearlySCT = getYearlySCT(semester.id);
+                                const isYearlySCTOverLimit = yearlySCT > 60;
+                                const yearNumber = Math.ceil(semester.id / 2);
+                                const hasErrors = isDDOverLimit || isTotalOverLimit || isSCTOverLimit || isYearlySCTOverLimit;
+
+                                return (
+                                    <div key={semester.id} className={`bg-slate-200 rounded-xl flex flex-col w-80 shadow-sm border transition-colors print-col ${hasErrors ? 'border-red-400 shadow-red-200 print:border-red-400' : 'border-slate-300'}`}>
+                                        
+                                        {/* Cabecera de Semestre */}
+                                        <div className="p-4 bg-slate-300 rounded-t-xl border-b border-slate-400 flex flex-col gap-3 print:bg-slate-100 print:p-2.5 print:border-slate-300">
+                                            <div className="flex justify-between items-start print:items-center">
+                                                <h2 className="font-bold text-slate-800 mt-1 print:mt-0 print:text-[11px] print:font-extrabold">{semester.title}</h2>
+                                                <div className="flex flex-col items-end print:flex-row print:gap-1.5 print:items-center">
+                                                    <span className={`text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 print:px-1.5 print:py-0.5 print:text-[9px] ${isSCTOverLimit ? 'bg-red-500 text-white print:text-red-700 print:bg-red-50 print:border print:border-red-200' : 'bg-blue-600 text-white print:text-blue-800 print:bg-blue-50 print:border print:border-blue-100'}`} title={isSCTOverLimit ? 'Supera el límite de 33 SCT por semestre' : ''}>
+                                                        {stats.sct} SCT
+                                                        {isSCTOverLimit && <i className="ph ph-warning text-sm no-print"></i>}
+                                                    </span>
+                                                    <span className={`text-[10px] mt-1 font-semibold flex items-center gap-1 print:mt-0 print:text-[8px] ${isYearlySCTOverLimit ? 'text-red-600' : 'text-slate-600'}`} title={isYearlySCTOverLimit ? 'Supera el límite de 60 SCT anuales' : ''}>
+                                                        Año {yearNumber}: {yearlySCT} SCT
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            
+                                            {/* Métricas compactas de horas */}
+                                            <div className="flex flex-col gap-1.5 text-xs bg-white/50 p-2 rounded-lg print:bg-transparent print:p-0 print:gap-0.5 print:pt-1 print:border-t print:border-slate-200 print:flex-row print:justify-between print:text-[8px] print:text-slate-500">
+                                                <div className="flex justify-between items-center print:gap-0.5">
+                                                    <span className="text-slate-600 font-medium print:text-[8px]">DD:</span>
+                                                    <span className={`font-bold flex items-center gap-1 px-1.5 py-0.5 rounded print:p-0 print:font-bold ${isDDOverLimit ? 'bg-red-100 text-red-700 print:text-red-600 print:bg-transparent' : 'text-slate-700'}`}>
+                                                        {stats.dd} hrs
+                                                    </span>
+                                                </div>
+                                                <div className="flex justify-between items-center print:gap-0.5">
+                                                    <span className="text-slate-600 font-medium print:text-[8px]">TA:</span>
+                                                    <span className="font-bold text-slate-700 pr-1 print:pr-0 print:font-bold">{stats.ta} hrs</span>
+                                                </div>
+                                                <div className="flex justify-between items-center pt-1.5 mt-0.5 border-t border-slate-300 print:p-0 print:m-0 print:border-none print:gap-0.5">
+                                                    <span className="text-slate-700 font-semibold print:font-medium print:text-[8px]">Total:</span>
+                                                    <span className={`font-bold flex items-center gap-1 px-1.5 py-0.5 rounded print:p-0 print:font-bold ${isTotalOverLimit ? 'bg-red-100 text-red-700 print:text-red-600 print:bg-transparent' : 'text-slate-800'}`}>
+                                                        {totalHours} hrs
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Contenedor de Cursos */}
+                                        <div className="p-3 flex flex-col gap-3 overflow-y-auto max-h-[60vh] print:max-h-none print:overflow-visible print-courses-container">
+                                            {semester.courses.map((course) => {
+                                                const incoming = prereqMap.incoming[course.id] || [];
+                                                const incomingCourses = incoming.map(pid => courseById[pid]).filter(Boolean);
+                                                const isPrereqOver = incoming.length > MAX_PREVIATURAS;
+                                                const showPrereqs = showPrereqInMalla && incomingCourses.length > 0;
+
+                                                return (
+                                                <div key={course.id} className={`rounded-lg shadow-sm border p-3 relative group transition-all print:break-inside-avoid print:shadow-none print:p-1.5 print:border-slate-300 ${course.isLocked ? 'bg-slate-50 border-slate-300 print:bg-white' : 'bg-white border-slate-200 hover:shadow-md'}`}>
+                                                    
+                                                    {/* Botones contextuales (ocultos en impresión) */}
+                                                    <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity no-print bg-white/90 p-1 rounded">
+                                                        <button onClick={() => toggleLockCourse(semester.id, course.id)} className={`hover:text-blue-600 transition-colors ${course.isLocked ? 'text-blue-500 opacity-100' : 'text-slate-400'}`} title={course.isLocked ? "Desbloquear" : "Bloquear edición"}>
+                                                            {course.isLocked ? <i className="ph-fill ph-lock-key text-base"></i> : <i className="ph ph-lock-key-open text-base"></i>}
+                                                        </button>
+                                                        
+                                                        {!course.isLocked && (
+                                                            <button onClick={() => removeCourse(semester.id, course.id)} className="text-slate-400 hover:text-red-500 transition-colors" title="Eliminar asignatura">
+                                                                <i className="ph ph-trash text-base"></i>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {/* Nombre del curso: Input interactivo / Texto estático en impresión */}
+                                                    <div className="print:hidden">
+                                                        <input type="text" value={course.name} disabled={course.isLocked} onChange={(e) => updateCourse(semester.id, course.id, 'name', e.target.value)} className={`w-full font-semibold border-none focus:ring-0 p-0 text-sm mb-3 bg-transparent ${course.isLocked ? 'text-slate-700 cursor-not-allowed' : 'text-slate-800'}`} placeholder="Nombre de la asignatura" />
+                                                    </div>
+                                                    <div className="hidden print:block font-bold text-[10.5px] text-slate-900 leading-tight mb-1">
+                                                        {course.name}
+                                                    </div>
+                                                    
+                                                    {/* Horas del curso: Inputs interactivos / Datos estáticos en impresión */}
+                                                    <div className="grid grid-cols-2 gap-2 text-xs print:hidden">
+                                                        <div className="flex flex-col">
+                                                            <label className="text-slate-500 mb-1">Doc. Directa</label>
+                                                            <input type="number" min="0" disabled={course.isLocked} value={course.dd} onChange={(e) => updateCourse(semester.id, course.id, 'dd', e.target.value)} className={`border rounded px-2 py-1 outline-none ${course.isLocked ? 'border-transparent bg-transparent text-slate-700 cursor-not-allowed pl-0 font-medium' : 'border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white'}`} />
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <label className="text-slate-500 mb-1">Trab. Autónomo</label>
+                                                            <input type="number" min="0" disabled={course.isLocked} value={course.ta} onChange={(e) => updateCourse(semester.id, course.id, 'ta', e.target.value)} className={`border rounded px-2 py-1 outline-none ${course.isLocked ? 'border-transparent bg-transparent text-slate-700 cursor-not-allowed pl-0 font-medium' : 'border-slate-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 bg-white'}`} />
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* Vista de horas impresa compacta */}
+                                                    <div className="hidden print:flex justify-between items-center text-[8.5px] text-slate-600 font-mono mt-0.5 pt-0.5 border-t border-slate-100">
+                                                        <span>DD: {course.dd}h | TA: {course.ta}h</span>
+                                                        <span className="font-bold text-blue-800">SCT {calcularSCT(course.dd, course.ta)}</span>
+                                                    </div>
+
+                                                    {/* Previaturas impresas (tamaño reducido) */}
+                                                    {showPrereqs && (
+                                                        <div className={`hidden print:block text-[7.5px] leading-tight mt-0.5 font-mono ${isPrereqOver ? 'text-amber-700 font-bold' : 'text-slate-500'}`}>
+                                                            {isPrereqOver && <i className="ph-fill ph-warning mr-0.5"></i>}
+                                                            Prev: {incomingCourses.map(c => c.name).join(' · ')}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Previaturas en pantalla (tamaño reducido) */}
+                                                    {showPrereqs && (
+                                                        <div className={`mt-2 pt-2 border-t border-slate-100 print:hidden`}>
+                                                            <div className={`flex flex-wrap items-center gap-1 text-[10px] ${isPrereqOver ? 'text-amber-700' : 'text-slate-500'}`}>
+                                                                <span className="flex items-center gap-0.5 font-medium">
+                                                                    {isPrereqOver ? <i className="ph-fill ph-warning"></i> : <i className="ph ph-arrow-down-left"></i>}
+                                                                    Prev:
+                                                                </span>
+                                                                {incomingCourses.map(c => (
+                                                                    <span key={c.id} className={`px-1.5 py-0.5 rounded border ${isPrereqOver ? 'bg-amber-50 border-amber-200 text-amber-800' : 'bg-slate-50 border-slate-200 text-slate-600'}`}>
+                                                                        {c.name}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Footer regular de curso en pantalla */}
+                                                    <div className="mt-3 pt-2 border-t border-slate-100 flex justify-between items-center print:hidden">
+                                                        <span className="text-xs font-medium text-slate-500">SCT:</span>
+                                                        <span className="text-sm font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+                                                            {calcularSCT(course.dd, course.ta)}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Añadir Asignatura */}
+                                        <div className="p-3 no-print">
+                                            <button onClick={() => addCourse(semester.id)} className="w-full flex items-center justify-center gap-2 text-sm text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-white border border-slate-300 border-dashed rounded-lg py-2 transition-colors">
+                                                <i className="ph ph-plus text-base"></i> Añadir Asignatura
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </main>
+
+                    {/* Panel de asignación de previaturas */}
+                    <main className={`${activeTab === 'previaturas' ? 'block' : 'hidden'} no-print flex-1 overflow-y-auto p-6`}>
+                        <div className="max-w-7xl mx-auto">
+
+                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                                <div className="flex items-start gap-3">
+                                    <i className="ph ph-tree-structure text-blue-600 text-2xl mt-0.5"></i>
+                                    <div>
+                                        <h2 className="text-lg font-bold text-slate-800">Asignación de Previaturas</h2>
+                                        <p className="text-sm text-slate-600 mt-1">
+                                            Cada asignatura (nodo) puede recibir como máximo <strong>{MAX_PREVIATURAS} previaturas</strong> y ser previatura de como máximo <strong>{MAX_PREVIATURAS} asignaturas</strong>.
+                                            Si se supera ese límite, la asignatura se marca en <span className="font-semibold text-amber-700">amarillo</span> con una advertencia,
+                                            pero la configuración se mantiene y queda a tu criterio.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-500">
+                                    <span className="flex items-center gap-1"><i className="ph ph-link"></i> {prereqLinkCount} previaturas asignadas</span>
+                                    <span className="flex items-center gap-1"><i className="ph ph-list-numbers"></i> {allCourses.length} asignaturas en la malla</span>
+                                </div>
+
+                                {warningCount > 0 && (
+                                    <div className="mt-4 bg-amber-50 border border-amber-300 text-amber-800 rounded-lg p-3 text-sm flex items-start gap-2">
+                                        <i className="ph-fill ph-warning text-lg shrink-0 mt-0.5"></i>
+                                        <div>
+                                            <strong>{warningCount} {warningCount === 1 ? 'asignatura supera' : 'asignaturas superan'} el límite recomendado:</strong>
+                                            <ul className="list-disc ml-5 mt-1 space-y-0.5">
+                                                {Object.entries(prereqWarnings).map(([id, reasons]) => (
+                                                    <li key={id}><span className="font-semibold">{courseById[id] ? courseById[id].name : id}</span> — {reasons.join(' / ')}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mt-5 mb-5 flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-sm max-w-md">
+                                <i className="ph ph-magnifying-glass text-slate-400"></i>
+                                <input
+                                    type="text"
+                                    value={prereqFilter}
+                                    onChange={(e) => setPrereqFilter(e.target.value)}
+                                    placeholder="Filtrar asignaturas por nombre..."
+                                    className="flex-1 text-sm bg-transparent outline-none"
+                                />
+                                {prereqFilter && (
+                                    <button onClick={() => setPrereqFilter('')} className="text-slate-400 hover:text-slate-600" title="Limpiar filtro">
+                                        <i className="ph ph-x-circle text-base"></i>
+                                    </button>
+                                )}
+                            </div>
+
+                            {semesters.map(semester => {
+                                const filterText = prereqFilter.trim().toLowerCase();
+                                const visibleCourses = semester.courses.filter(c => c.name.toLowerCase().includes(filterText));
+
+                                if (visibleCourses.length === 0) return null;
+
+                                return (
+                                    <section key={semester.id} className="mb-6">
+                                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+                                            {semester.title}
+                                            <span className="ml-1 font-medium normal-case text-slate-400">({visibleCourses.length} asignatura{visibleCourses.length === 1 ? '' : 's'})</span>
+                                        </h3>
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                                            {visibleCourses.map(course => {
+                                                const incoming = prereqMap.incoming[course.id];
+                                                const outgoing = prereqMap.outgoing[course.id];
+                                                const warnings = prereqWarnings[course.id];
+                                                const isIncomingOver = incoming.length > MAX_PREVIATURAS;
+                                                const isOutgoingOver = outgoing.length > MAX_PREVIATURAS;
+                                                const availableCourses = allCourses.filter(c => c.id !== course.id && !incoming.includes(c.id));
+
+                                                return (
+                                                    <div key={course.id} className={`rounded-xl border p-4 shadow-sm transition-colors ${warnings ? 'bg-amber-50 border-amber-400 shadow-amber-100' : 'bg-white border-slate-200'}`}>
+
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <h4 className="text-sm font-semibold text-slate-800 leading-snug">
+                                                                <span className="mr-1 font-mono text-[11px] text-slate-400">{course.id}</span>
+                                                                {course.name}
+                                                            </h4>
+                                                            {warnings && <i className="ph-fill ph-warning-octagon text-amber-500 text-xl shrink-0" title={warnings.join(' / ')}></i>}
+                                                        </div>
+
+                                                        {/* Previaturas que entran al nodo */}
+                                                        <div className="mt-3">
+                                                            <div className={`flex items-center justify-between text-xs font-semibold ${isIncomingOver ? 'text-amber-700' : 'text-slate-500'}`}>
+                                                                <span className="flex items-center gap-1"><i className="ph ph-arrow-down-left"></i> Previaturas ({incoming.length})</span>
+                                                                {isIncomingOver && <span className="text-[10px] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded-full">máx. {MAX_PREVIATURAS}</span>}
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                                                {incoming.length === 0 ? (
+                                                                    <span className="text-xs italic text-slate-400">Sin previaturas</span>
+                                                                ) : incoming.map(prereqId => (
+                                                                    <span key={prereqId} className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${isIncomingOver ? 'bg-amber-100 border-amber-300 text-amber-900' : 'bg-slate-100 border-slate-200 text-slate-700'}`}>
+                                                                        {courseById[prereqId] ? courseById[prereqId].name : prereqId}
+                                                                        <button onClick={() => removePrerequisite(course.id, prereqId)} className="text-slate-400 hover:text-red-500 transition-colors" title="Quitar previatura">
+                                                                            <i className="ph ph-x text-[10px]"></i>
+                                                                        </button>
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                            <select
+                                                                value=""
+                                                                onChange={(e) => addPrerequisite(course.id, e.target.value)}
+                                                                disabled={availableCourses.length === 0}
+                                                                className="mt-2 w-full text-xs border border-slate-300 rounded px-2 py-1.5 bg-white text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 disabled:bg-slate-100 disabled:text-slate-400"
+                                                            >
+                                                                <option value="">+ Agregar previatura...</option>
+                                                                {semesters.map(sem => {
+                                                                    const options = sem.courses.filter(c => availableCourses.some(a => a.id === c.id));
+                                                                    if (options.length === 0) return null;
+                                                                    return (
+                                                                        <optgroup key={sem.id} label={sem.title}>
+                                                                            {options.map(option => <option key={option.id} value={option.id}>{option.name}</option>)}
+                                                                        </optgroup>
+                                                                    );
+                                                                })}
+                                                            </select>
+                                                        </div>
+
+                                                        {/* Asignaturas que salen del nodo */}
+                                                        <div className="mt-3 pt-3 border-t border-slate-200/70">
+                                                            <div className={`flex items-center justify-between text-xs font-semibold ${isOutgoingOver ? 'text-amber-700' : 'text-slate-500'}`}>
+                                                                <span className="flex items-center gap-1"><i className="ph ph-arrow-up-right"></i> Es previatura de ({outgoing.length})</span>
+                                                                {isOutgoingOver && <span className="text-[10px] bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded-full">máx. {MAX_PREVIATURAS}</span>}
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                                                {outgoing.length === 0 ? (
+                                                                    <span className="text-xs italic text-slate-400">Ninguna</span>
+                                                                ) : outgoing.map(dependentId => (
+                                                                    <span key={dependentId} className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border ${isOutgoingOver ? 'bg-amber-100 border-amber-300 text-amber-900' : 'bg-blue-50 border-blue-100 text-blue-800'}`}>
+                                                                        {courseById[dependentId] ? courseById[dependentId].name : dependentId}
+                                                                        <button onClick={() => removePrerequisite(dependentId, course.id)} className="text-slate-400 hover:text-red-500 transition-colors" title="Quitar esta previatura">
+                                                                            <i className="ph ph-x text-[10px]"></i>
+                                                                        </button>
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+
+                                                        {warnings && (
+                                                            <p className="mt-3 text-[11px] text-amber-800 bg-amber-100/70 border border-amber-200 rounded px-2 py-1 flex items-start gap-1">
+                                                                <i className="ph-fill ph-warning mt-px shrink-0"></i>
+                                                                <span>Advertencia: {warnings.join(' / ')}.</span>
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </section>
+                                );
+                            })}
+                        </div>
+                    </main>
+
+                    {/* Panel de grafo de previaturas */}
+                    <main className={`${activeTab === 'grafo' ? 'flex' : 'hidden'} no-print flex-1 min-h-0 flex-col`}>
+                        <div className="shrink-0 bg-gray-50 border-b border-slate-200 px-6 py-2 flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">
+                                <span className="flex items-center gap-1 font-semibold text-slate-700">
+                                    <i className="ph ph-share-network text-blue-600 text-base"></i> Grafo de Previaturas
+                                </span>
+                                <span className="flex items-center gap-1"><i className="ph ph-graph"></i> {graphModel.nodes.length} nodos · {graphModel.edges.length} flechas</span>
+                                {warningCount > 0 && (
+                                    <span className="flex items-center gap-1 text-amber-700" title="Nodos que superan el límite de 2 previaturas entrantes o salientes">
+                                        <i className="ph-fill ph-warning"></i> {warningCount} con advertencia
+                                    </span>
+                                )}
+                                {graphModel.anomalyCount > 0 && (
+                                    <span className="flex items-center gap-1 text-amber-700" title="Flechas discontinuas: la previatura está en la misma etapa o en una posterior">
+                                        <i className="ph ph-warning-circle"></i> {graphModel.anomalyCount} flecha(s) fuera de secuencia
+                                    </span>
+                                )}
+                                {graphModel.isolatedCount > 0 && (
+                                    <span className="flex items-center gap-1 text-slate-500" title="Asignaturas sin previaturas ni dependientes"><i className="ph ph-circle-dashed"></i> {graphModel.isolatedCount} sin conexiones</span>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <span className="hidden lg:flex items-center gap-3 text-[11px] text-slate-500">
+                                    <span className="flex items-center gap-1">
+                                        <svg width="22" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="#059669" strokeWidth="2.4" /><polygon points="16,1 22,4 16,7" fill="#059669" /></svg> entrante
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                        <svg width="22" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="#2563eb" strokeWidth="2.4" /><polygon points="16,1 22,4 16,7" fill="#2563eb" /></svg> saliente
+                                    </span>
+                                </span>
+                                <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg px-1 py-1 shadow-sm">
+                                    <button onClick={() => setGraphZoom(z => Math.max(0.35, Number((z - 0.1).toFixed(2))))} className="px-2 py-0.5 text-slate-600 hover:text-blue-600" title="Alejar"><i className="ph ph-minus"></i></button>
+                                    <span className="text-xs font-semibold text-slate-600 w-10 text-center">{Math.round(graphZoom * 100)}%</span>
+                                    <button onClick={() => setGraphZoom(z => Math.min(1.6, Number((z + 0.1).toFixed(2))))} className="px-2 py-0.5 text-slate-600 hover:text-blue-600" title="Acercar"><i className="ph ph-plus"></i></button>
+                                    <button onClick={fitGraphToWidth} className="px-2 py-0.5 text-slate-600 hover:text-blue-600 border-l border-slate-200 ml-1" title="Ajustar al ancho"><i className="ph ph-arrows-out-line-horizontal"></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="shrink-0 px-6 py-2 bg-white border-b border-slate-200 text-xs text-slate-600 flex flex-wrap items-center gap-x-4 gap-y-1">
+                            {graphFocusId && courseById[graphFocusId] ? (
+                                <>
+                                    <span className="font-semibold text-slate-800">{courseById[graphFocusId].name}</span>
+                                    <span>{courseById[graphFocusId].semesterTitle}</span>
+                                    <span className="text-emerald-700">Entrantes: {prereqMap.incoming[graphFocusId].length}</span>
+                                    <span className="text-blue-700">Salientes: {prereqMap.outgoing[graphFocusId].length}</span>
+                                    {(prereqWarnings[graphFocusId] || []).map(reason => (
+                                        <span key={reason} className="text-amber-700"><i className="ph-fill ph-warning mr-1"></i>{reason}</span>
+                                    ))}
+                                    <button onClick={() => setGraphSelectedId(null)} className="ml-auto text-slate-400 hover:text-slate-600">
+                                        <i className="ph ph-x-circle mr-1"></i> Limpiar selección
+                                    </button>
+                                </>
+                            ) : (
+                                <span className="text-slate-500">
+                                    <i className="ph ph-cursor-click mr-1"></i> Pasa el cursor o haz clic en una asignatura para resaltar sus previaturas entrantes (verde) y salientes (azul).
+                                </span>
+                            )}
+                        </div>
+
+                        <div ref={graphViewportRef} className="flex-1 min-h-0 overflow-auto bg-slate-100 p-6">
+                            {graphModel.nodes.length === 0 ? (
+                                <div className="text-sm text-slate-500 flex items-center gap-2">
+                                    <i className="ph ph-info text-lg"></i> No hay asignaturas en la malla para graficar.
+                                </div>
+                            ) : (
+                                <div style={{ width: graphModel.svgWidth * graphZoom, height: graphModel.svgHeight * graphZoom }}>
+                                    <svg width={graphModel.svgWidth} height={graphModel.svgHeight} style={{ transform: `scale(${graphZoom})`, transformOrigin: 'top left' }}>
+                                        <defs>
+                                            {[
+                                                { id: 'graph-arrow', color: '#94a3b8' },
+                                                { id: 'graph-arrow-in', color: '#059669' },
+                                                { id: 'graph-arrow-out', color: '#2563eb' },
+                                                { id: 'graph-arrow-anomaly', color: '#f59e0b' }
+                                            ].map(marker => (
+                                                <marker key={marker.id} id={marker.id} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                                                    <path d="M 0 0 L 10 5 L 0 10 z" fill={marker.color} />
+                                                </marker>
+                                            ))}
+                                        </defs>
+
+                                        {graphModel.lanes.map(lane => (
+                                            <g key={lane.key}>
+                                                <rect x={lane.x} y={lane.y} width={lane.width} height={lane.height} rx="12" fill="#f8fafc" stroke="#e2e8f0" />
+                                                <text x={lane.x + lane.width / 2} y={lane.y + 17} textAnchor="middle" fontSize="9" fontWeight="700" fill="#94a3b8">{lane.title.toUpperCase()}</text>
+                                            </g>
+                                        ))}
+
+                                        {graphModel.edges.map(edge => {
+                                            const isIncoming = graphFocusId ? edge.to === graphFocusId : false;
+                                            const isOutgoing = graphFocusId ? edge.from === graphFocusId : false;
+                                            const dimmed = graphFocusId && !isIncoming && !isOutgoing;
+                                            const color = edge.isAnomaly ? '#f59e0b' : isIncoming ? '#059669' : isOutgoing ? '#2563eb' : '#94a3b8';
+                                            const marker = edge.isAnomaly
+                                                ? 'url(#graph-arrow-anomaly)'
+                                                : isIncoming ? 'url(#graph-arrow-in)' : isOutgoing ? 'url(#graph-arrow-out)' : 'url(#graph-arrow)';
+
+                                            return (
+                                                <path
+                                                    key={edge.key}
+                                                    d={edge.path}
+                                                    fill="none"
+                                                    stroke={color}
+                                                    strokeWidth={isIncoming || isOutgoing ? 2.4 : 1.3}
+                                                    strokeDasharray={edge.isAnomaly ? '5 4' : undefined}
+                                                    markerEnd={marker}
+                                                    opacity={dimmed ? 0.12 : 0.95}
+                                                />
+                                            );
+                                        })}
+
+                                        {graphModel.nodes.map(node => {
+                                            const dimmed = graphFocusSet && !graphFocusSet.has(node.id);
+                                            const isFocused = graphFocusId === node.id;
+
+                                            return (
+                                                <g
+                                                    key={node.id}
+                                                    transform={`translate(${node.x},${node.y})`}
+                                                    opacity={dimmed ? 0.28 : 1}
+                                                    className="cursor-pointer"
+                                                    onMouseEnter={() => setGraphHoverId(node.id)}
+                                                    onMouseLeave={() => setGraphHoverId(null)}
+                                                    onClick={() => setGraphSelectedId(current => current === node.id ? null : node.id)}
+                                                >
+                                                    <title>{`${node.name} — ${node.incoming} previatura(s) entrante(s), ${node.outgoing} saliente(s)`}</title>
+                                                    <rect
+                                                        width={GRAPH_NODE_W}
+                                                        height={GRAPH_NODE_H}
+                                                        rx="10"
+                                                        fill={node.warnings ? '#fef3c7' : node.palette.fill}
+                                                        stroke={node.warnings ? '#f59e0b' : node.palette.stroke}
+                                                        strokeWidth={isFocused ? 2.8 : 1.4}
+                                                    />
+                                                    {node.warnings && (
+                                                        <>
+                                                            <circle cx={GRAPH_NODE_W - 14} cy={14} r="8" fill="#f59e0b" />
+                                                            <text x={GRAPH_NODE_W - 14} y={17.5} textAnchor="middle" fontSize="10.5" fontWeight="700" fill="#ffffff">!</text>
+                                                        </>
+                                                    )}
+                                                    {node.lines.map((line, index) => (
+                                                        <text key={index} x={11} y={21 + index * 12} fontSize="9.5" fontWeight="600" fill="#0f172a">{line}</text>
+                                                    ))}
+                                                    <text x={11} y={GRAPH_NODE_H - 7} fontSize="7.5" fontFamily="monospace" fill="#64748b">{node.id} · {node.semesterTitle}</text>
+                                                    <text x={GRAPH_NODE_W - 11} y={GRAPH_NODE_H - 7} fontSize="7.5" fontWeight="700" fill="#1d4ed8" textAnchor="end">{node.sct} SCT</text>
+                                                </g>
+                                            );
+                                        })}
+                                    </svg>
+                                </div>
+                            )}
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

@@ -29,10 +29,9 @@ def split_pdf_by_custom_ranges(input_pdf_path, output_prefix, page_ranges):
 
 
 # Ejemplo de uso
-input_pdf = "/home/carlosv/Descargas/00-NCh-433-Of-1996-Mod-2009-DS-61-2011-refundido.pdf"
-output_prefix = "Nch433_of96_Mod2012_"
-page_ranges = [(11,16),(16,37),(38,46),(47,48),(49,52),(53,57),(58,58),(59,74)]
-
+input_pdf = "/home/carlosv/Descargas/Metodologia_de_la_Investigacion_-_Hernan.pdf"
+output_prefix = "Metodologia_de_la_Investigacion_"
+page_ranges = [(35,54),(55,65),(67,90),(91,120),(121,134),(135,158),(159,202),(203,228),(229,302),(303,368),(369,387),(389,414),(415,426),(427,500),(501,540),(541,563),(565,621)]
 #Verificar si existe archivo o directorio
 if not os.path.exists(input_pdf):
     print("No existe:", input_pdf)
