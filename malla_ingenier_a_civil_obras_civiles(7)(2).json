@@ -1,0 +1,592 @@
+{
+  "careerName": "Ingeniería Civil Obras Civiles",
+  "semesters": [
+    {
+      "id": 1,
+      "title": "Semestre I",
+      "courses": [
+        {
+          "id": "1-1",
+          "name": "Cálculo I",
+          "dd": 6,
+          "ta": "4",
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "1-2",
+          "name": "Álgebra I",
+          "dd": 6,
+          "ta": "4",
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "1-3",
+          "name": "Programación",
+          "dd": "6",
+          "ta": "5",
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "1-4",
+          "name": "Taller de Introducción a la Ingeniería",
+          "dd": "4",
+          "ta": "8",
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "1-5",
+          "name": "Comunicación",
+          "dd": 2,
+          "ta": 3,
+          "isLocked": true,
+          "prerequisites": []
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Semestre II",
+      "courses": [
+        {
+          "id": "2-1",
+          "name": "Cálculo II",
+          "dd": 6,
+          "ta": "4",
+          "isLocked": true,
+          "prerequisites": [
+            "1-1"
+          ]
+        },
+        {
+          "id": "2-2",
+          "name": "Álgebra II",
+          "dd": 6,
+          "ta": "4",
+          "isLocked": true,
+          "prerequisites": [
+            "1-2"
+          ]
+        },
+        {
+          "id": "2-3",
+          "name": "Física General",
+          "dd": "6",
+          "ta": "4",
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "2-4",
+          "name": "Química",
+          "dd": "2",
+          "ta": 4,
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "2-5",
+          "name": "Ciudadanía",
+          "dd": 2,
+          "ta": "1",
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "1791409145463",
+          "name": "Topografía",
+          "dd": "4",
+          "ta": "5",
+          "isLocked": true,
+          "prerequisites": [
+            "1-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Semestre III",
+      "courses": [
+        {
+          "id": "3-1",
+          "name": "Cálculo Multivariable",
+          "dd": "5",
+          "ta": "5",
+          "isLocked": true,
+          "prerequisites": [
+            "2-1"
+          ]
+        },
+        {
+          "id": "3-2",
+          "name": "Electromagnetismo",
+          "dd": "4",
+          "ta": 5,
+          "isLocked": true,
+          "prerequisites": [
+            "2-3"
+          ]
+        },
+        {
+          "id": "3-3",
+          "name": "Inglés I",
+          "dd": 2,
+          "ta": 3,
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "1791409231766",
+          "name": "Economía",
+          "dd": "4",
+          "ta": "3",
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "1791409243352",
+          "name": "Análisis Estructural",
+          "dd": "4",
+          "ta": "4",
+          "isLocked": true,
+          "prerequisites": [
+            "2-3",
+            "1-1"
+          ]
+        },
+        {
+          "id": "1791409251223",
+          "name": "Mecánica General",
+          "dd": "4",
+          "ta": "5",
+          "isLocked": true,
+          "prerequisites": [
+            "2-3",
+            "2-1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Semestre IV",
+      "courses": [
+        {
+          "id": "4-1",
+          "name": "Ecuaciones Diferenciales",
+          "dd": "5",
+          "ta": "5",
+          "isLocked": true,
+          "prerequisites": [
+            "3-1"
+          ]
+        },
+        {
+          "id": "4-2",
+          "name": "Estadística y Probabilidad",
+          "dd": "4",
+          "ta": "4",
+          "isLocked": true,
+          "prerequisites": [
+            "1-1"
+          ]
+        },
+        {
+          "id": "4-3",
+          "name": "Inglés II",
+          "dd": 2,
+          "ta": 3,
+          "isLocked": true,
+          "prerequisites": [
+            "3-3"
+          ]
+        },
+        {
+          "id": "1791409353717",
+          "name": "Electivo Departamental 1",
+          "dd": "2",
+          "ta": "1",
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "1791409369981",
+          "name": "Mecánica de Fluidos",
+          "dd": "6",
+          "ta": "6",
+          "isLocked": true,
+          "prerequisites": [
+            "1791409251223"
+          ]
+        },
+        {
+          "id": "1791409384470",
+          "name": "Termodinámica",
+          "dd": "4",
+          "ta": "6",
+          "isLocked": true,
+          "prerequisites": [
+            "3-2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Semestre V",
+      "courses": [
+        {
+          "id": "5-1",
+          "name": "Cálculo Numérico",
+          "dd": 4,
+          "ta": 4,
+          "isLocked": true,
+          "prerequisites": [
+            "4-1"
+          ]
+        },
+        {
+          "id": "5-2",
+          "name": "Inglés III",
+          "dd": "2",
+          "ta": "3",
+          "isLocked": true,
+          "prerequisites": [
+            "4-3"
+          ]
+        },
+        {
+          "id": "5-3",
+          "name": "Investigación Operativa",
+          "dd": "4",
+          "ta": "4",
+          "isLocked": true,
+          "prerequisites": [
+            "2-2"
+          ]
+        },
+        {
+          "id": "5-4",
+          "name": "Hidráulica",
+          "dd": "4",
+          "ta": "4",
+          "isLocked": true,
+          "prerequisites": [
+            "1791409369981"
+          ]
+        },
+        {
+          "id": "1791409506367",
+          "name": "Resistencia de Materiales",
+          "dd": "4",
+          "ta": "5",
+          "isLocked": true,
+          "prerequisites": [
+            "1791409243352",
+            "1791409251223"
+          ]
+        },
+        {
+          "id": "1791409509890",
+          "name": "Mecánica de Suelos",
+          "dd": "4",
+          "ta": "6",
+          "isLocked": true,
+          "prerequisites": [
+            "1791409243352"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Semestre VI",
+      "courses": [
+        {
+          "id": "6-1",
+          "name": "Inglés para Ingenieros",
+          "dd": 2,
+          "ta": 3,
+          "isLocked": true,
+          "prerequisites": [
+            "5-2"
+          ]
+        },
+        {
+          "id": "6-2",
+          "name": "Formulación y Evaluación de Proyectos",
+          "dd": 4,
+          "ta": "3",
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "1791409589054",
+          "name": "Análisis Estructural II",
+          "dd": "6",
+          "ta": "5",
+          "isLocked": true,
+          "prerequisites": [
+            "1791409243352"
+          ]
+        },
+        {
+          "id": "1791409600999",
+          "name": "Fundaciones",
+          "dd": "4",
+          "ta": "6",
+          "isLocked": true,
+          "prerequisites": [
+            "1791409509890"
+          ]
+        },
+        {
+          "id": "1791409613184",
+          "name": "Ingeniería Ambiental",
+          "dd": "4",
+          "ta": "5",
+          "isLocked": true,
+          "prerequisites": [
+            "1791409384470",
+            "5-4"
+          ]
+        },
+        {
+          "id": "1791409623832",
+          "name": "Taller de Ingeniería Civil",
+          "dd": "2",
+          "ta": "4",
+          "isLocked": true,
+          "prerequisites": [
+            "1791409506367"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Semestre VII",
+      "courses": [
+        {
+          "id": "7-1",
+          "name": "Inglés Técnico \"Especialidad\"",
+          "dd": 2,
+          "ta": 3,
+          "isLocked": true,
+          "prerequisites": [
+            "6-1"
+          ]
+        },
+        {
+          "id": "7-2",
+          "name": "Dinámica de Estructuras",
+          "dd": "6",
+          "ta": 4,
+          "isLocked": true,
+          "prerequisites": [
+            "1791409589054"
+          ]
+        },
+        {
+          "id": "1791409726614",
+          "name": "Hidrología",
+          "dd": "4",
+          "ta": "5",
+          "isLocked": true,
+          "prerequisites": [
+            "1791409613184"
+          ]
+        },
+        {
+          "id": "1791409736882",
+          "name": "Diseño de Acero",
+          "dd": "5",
+          "ta": "5",
+          "isLocked": true,
+          "prerequisites": [
+            "1791409506367"
+          ]
+        },
+        {
+          "id": "1791409749030",
+          "name": "Gestión de la Construcción",
+          "dd": "4",
+          "ta": "2",
+          "isLocked": true,
+          "prerequisites": [
+            "5-3"
+          ]
+        },
+        {
+          "id": "1791409776692",
+          "name": "Práctica Intermedia",
+          "dd": 0,
+          "ta": "8",
+          "isLocked": true,
+          "prerequisites": [
+            "1791409623832"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Semestre VIII",
+      "courses": [
+        {
+          "id": "8-1",
+          "name": "Taller de Proyectos de Construcción",
+          "dd": "2",
+          "ta": 4,
+          "isLocked": true,
+          "prerequisites": [
+            "1791409776692"
+          ]
+        },
+        {
+          "id": "8-2",
+          "name": "Electivo AFI 1",
+          "dd": "2",
+          "ta": "1",
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "1791409846394",
+          "name": "Electivo Departamental 2",
+          "dd": "2",
+          "ta": "1",
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "1791409862505",
+          "name": "Diseño Sismorresistente",
+          "dd": "4",
+          "ta": "6",
+          "isLocked": true,
+          "prerequisites": [
+            "7-2"
+          ]
+        },
+        {
+          "id": "1791409877018",
+          "name": "Diseño de Hormigón",
+          "dd": "4",
+          "ta": "6",
+          "isLocked": true,
+          "prerequisites": [
+            "1791409736882"
+          ]
+        },
+        {
+          "id": "1791409888983",
+          "name": "Modelamiento BIM",
+          "dd": "2",
+          "ta": "5",
+          "isLocked": true,
+          "prerequisites": [
+            "1791409749030"
+          ]
+        },
+        {
+          "id": "1791409900973",
+          "name": "Hidráulica Aplicada",
+          "dd": "4",
+          "ta": "5",
+          "isLocked": true,
+          "prerequisites": [
+            "1791409726614"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Semestre IX",
+      "courses": [
+        {
+          "id": "9-1",
+          "name": "Electivo Profesional 1",
+          "dd": 4,
+          "ta": "3",
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "9-2",
+          "name": "Electivo Profesional 2",
+          "dd": 4,
+          "ta": "3",
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "9-3",
+          "name": "Anteproyecto de Título",
+          "dd": "3",
+          "ta": "5",
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "1791409986624",
+          "name": "Práctica Profesional",
+          "dd": 0,
+          "ta": "20",
+          "isLocked": true,
+          "prerequisites": [
+            "8-1",
+            "1791409776692"
+          ]
+        },
+        {
+          "id": "1791409994679",
+          "name": "Taller de Proyectos Hidráulicos",
+          "dd": "2",
+          "ta": "4",
+          "isLocked": true,
+          "prerequisites": [
+            "8-1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Semestre X",
+      "courses": [
+        {
+          "id": "10-1",
+          "name": "Electivo Profesional 3",
+          "dd": "4",
+          "ta": "3",
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "10-2",
+          "name": "Electivo Profesional 4",
+          "dd": "4",
+          "ta": "3",
+          "isLocked": true,
+          "prerequisites": []
+        },
+        {
+          "id": "1791410059976",
+          "name": "Proyecto de Título",
+          "dd": "3",
+          "ta": "32",
+          "isLocked": true,
+          "prerequisites": [
+            "9-3"
+          ]
+        }
+      ]
+    }
+  ]
+}
